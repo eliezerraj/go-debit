@@ -16,20 +16,22 @@ import(
 var childLogger = log.With().Str("adapter/restapi", "restapi").Logger()
 
 type RestApiSConfig struct {
-	serverUrlDomain			string
+	ServerUrlDomain			string
+	ServerUrlDomain2		string
 }
 
-func NewRestApi(serverUrlDomain string) (*RestApiSConfig){
+func NewRestApi(serverUrlDomain string, ServerUrlDomain2 string) (*RestApiSConfig){
 	childLogger.Debug().Msg("*** NewRestApi")
 	return &RestApiSConfig {
-		serverUrlDomain: 	serverUrlDomain,
+		ServerUrlDomain: 	serverUrlDomain,
+		ServerUrlDomain2: 	ServerUrlDomain2,
 	}
 }
 
-func (r *RestApiSConfig) GetData(ctx context.Context, id string, path string) (interface{}, error) {
+func (r *RestApiSConfig) GetData(ctx context.Context, serverUrlDomain string, path string, id string,) (interface{}, error) {
 	childLogger.Debug().Msg("GetData")
 
-	domain := r.serverUrlDomain + path +"/" + id
+	domain := serverUrlDomain + path +"/" + id
 
 	childLogger.Debug().Str("domain : ", domain).Msg("GetData")
 
@@ -42,10 +44,10 @@ func (r *RestApiSConfig) GetData(ctx context.Context, id string, path string) (i
 	return data_interface, nil
 }
 
-func (r *RestApiSConfig) PostData(ctx context.Context, path string ,data interface{}) (interface{}, error) {
+func (r *RestApiSConfig) PostData(ctx context.Context, serverUrlDomain string, path string ,data interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("PostData")
 
-	domain := r.serverUrlDomain + path 
+	domain := serverUrlDomain + path 
 
 	childLogger.Debug().Str("domain : ", domain).Msg("PostData")
 

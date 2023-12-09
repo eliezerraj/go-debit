@@ -25,7 +25,7 @@ import(
 var(
 	logLevel 	= 	zerolog.DebugLevel
 	noAZ		=	true // set only if you get to split the xray trace per AZ
-	serverUrlDomain 		string
+	serverUrlDomain, ServerUrlDomain2		string
 	infoPod					core.InfoPod
 	envDB	 				core.DatabaseRDS
 	httpAppServerConfig 	core.HttpAppServer
@@ -49,6 +49,7 @@ func loadLocalEnv(){
 	envDB.Postgres_Driver = "postgres"
 
 	serverUrlDomain 	= "http://localhost:5000"
+	ServerUrlDomain2 	= "http://localhost:5004"
 
 	//envDB.User  = "postgres"
 	//envDB.Password  = "pass123"
@@ -150,6 +151,9 @@ func getEnv() {
 	if os.Getenv("SERVER_URL_DOMAIN") !=  "" {	
 		serverUrlDomain = os.Getenv("SERVER_URL_DOMAIN")
 	}
+	if os.Getenv("SERVER_URL_DOMAIN2") !=  "" {	
+		ServerUrlDomain2 = os.Getenv("SERVER_URL_DOMAIN2")
+	}
 
 	if os.Getenv("NO_AZ") == "false" {	
 		noAZ = false
@@ -190,7 +194,7 @@ func main() {
 	
 	// Setup workload
 
-	restapi	:= restapi.NewRestApi(serverUrlDomain)
+	restapi	:= restapi.NewRestApi(serverUrlDomain, ServerUrlDomain2)
 
 	httpAppServerConfig.Server = server
 	repoDB = postgre.NewWorkerRepository(dataBaseHelper)
