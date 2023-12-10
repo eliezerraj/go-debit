@@ -1,6 +1,7 @@
 package service
 
 import (
+	"time"
 	"context"
 	"errors"
 	"github.com/rs/zerolog/log"
@@ -68,6 +69,7 @@ func (s WorkerService) Add(ctx context.Context, debit core.AccountStatement) (*c
 		return nil, erro.ErrInvalidAmount
 	}
 
+	// Get 
 	rest_interface_data, err := s.restapi.GetData(ctx, s.restapi.ServerUrlDomain, "/get", debit.AccountID )
 	if err != nil {
 		return nil, err
@@ -82,19 +84,19 @@ func (s WorkerService) Add(ctx context.Context, debit core.AccountStatement) (*c
 
 	childLogger.Debug().Interface("account_parsed:",account_parsed).Msg("")
 
+	// Add the Data 
 	debit.FkAccountID = account_parsed.ID
 	res, err := s.workerRepository.Add(ctx, tx, debit)
 	if err != nil {
 		return nil, err
 	}
-
 	childLogger.Debug().Interface("debit:",debit).Msg("")
 
 	_, err = s.restapi.PostData(ctx, s.restapi.ServerUrlDomain ,"/add/fund", debit)
 	if err != nil {
 		return nil, err
 	}
-
+	
 	// Get financial script
 	script := "script.debit"
 	res_script, err := s.restapi.GetData(ctx, s.restapi.ServerUrlDomain2 ,"/script/get", script)
@@ -120,10 +122,32 @@ func (s WorkerService) Add(ctx context.Context, debit core.AccountStatement) (*c
 			return nil, err
 		}
 		childLogger.Debug().Interface("res_fee:",res_fee).Msg("")
+
+		var fee_parsed core.Fee
+		err = mapstructure.Decode(res_fee, &fee_parsed)
+		if err != nil {
+			childLogger.Error().Err(err).Msg("error parse interface")
+			return nil, errors.New(err.Error())
+		}
+
+		accountStatementFee := core.AccountStatementFee{}
+		accountStatementFee.FkAccountStatementID = res.ID
+		accountStatementFee.TypeFee = fee_parsed.Name
+		accountStatementFee.ValueFee = fee_parsed.Value
+		accountStatementFee.ChargeAt = time.Now()
+		accountStatementFee.Currency = debit.Currency
+		accountStatementFee.Amount	 = (debit.Amount * (fee_parsed.Value/100))
+		accountStatementFee.TenantID = debit.TenantID
+
+		_, err = s.workerRepository.AddAccountStatementFee(ctx, tx, accountStatementFee)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return res, nil
 }
+
 func (s WorkerService) List(ctx context.Context, debit core.AccountStatement) (*[]core.AccountStatement, error){
 	childLogger.Debug().Msg("List")
 

@@ -40,3 +40,14 @@ type Script struct {
     Description string   `redis:"description" json:"description"`
 	Fee		    []string `redis:"fee" json:"fee"`
 }
+
+type AccountStatementFee struct {
+	ID				int			`json:"id,omitempty"`
+	FkAccountStatementID		 int `json:"fk_account_statement_id,omitempty"`
+	TypeFee			string  	`json:"type_fee,omitempty"`
+	ValueFee		float64  	`json:"value_fee,omitempty"`
+	ChargeAt		time.Time 	`json:"charged_at,omitempty"`
+	Currency		string  	`json:"currency,omitempty"`
+	Amount			float64 	`json:"amount,omitempty"`
+	TenantID		string  	`json:"tenant_id,omitempty"`
+}

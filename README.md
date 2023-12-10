@@ -16,6 +16,17 @@ CRUD a account_statement data.
         tenant_id       varchar(200) NULL
     );
 
+    CREATE TABLE account_statement_fee (
+        id              SERIAL PRIMARY KEY,
+        fk_account_statement_id   integer REFERENCES account_statement(id),
+        charged_at      timestamptz NULL,
+        type_fee        varchar(200) NULL,
+        value_fee       float8 NULL,
+        currency        varchar(10) NULL,   
+        amount          float8 NULL,
+        tenant_id       varchar(200) NULL
+    );
+
 ## Endpoints
 
 + POST /add

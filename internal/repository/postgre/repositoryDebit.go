@@ -8,12 +8,13 @@ import (
 	_ "github.com/lib/pq"
 	"database/sql"
 
+	//"github.com/go-debit/internal/erro"
 	"github.com/go-debit/internal/core"
 	"github.com/aws/aws-xray-sdk-go/xray"
 
 )
 
-func (w WorkerRepository) Add(ctx context.Context, tx *sql.Tx ,debit core.AccountStatement) (*core.AccountStatement, error){
+func (w WorkerRepository) Add(ctx context.Context, tx *sql.Tx , debit core.AccountStatement) (*core.AccountStatement, error){
 	childLogger.Debug().Msg("Add")
 
 	_, root := xray.BeginSubsegment(ctx, "SQL.Add")
@@ -27,26 +28,45 @@ func (w WorkerRepository) Add(ctx context.Context, tx *sql.Tx ,debit core.Accoun
 																currency,
 																amount,
 																tenant_id) 
-									VALUES($1, $2, $3, $4, $5, $6) `)
+									VALUES($1, $2, $3, $4, $5, $6) RETURNING id `)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("INSERT statement")
 		return nil, errors.New(err.Error())
 	}
 
-	_, err = stmt.ExecContext(	ctx,
-								debit.FkAccountID, 
-								debit.Type,
-								time.Now(),
-								debit.Currency,
-								debit.Amount,
-								debit.TenantID)
+	/*result, err := stmt.ExecContext(	ctx,
+										debit.FkAccountID, 
+										debit.Type,
+										time.Now(),
+										debit.Currency,
+										debit.Amount,
+										debit.TenantID)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Exec statement")
 		return nil, errors.New(err.Error())
 	}
 
+	inserted, errRows := result.RowsAffected()
+    if errRows != nil {
+        return nil, errors.New(err.Error())
+    } else if inserted == 0 {
+		return nil, erro.ErrInsert
+    }*/
+
+	var id int
+	err = stmt.QueryRowContext(ctx, debit.FkAccountID,debit.Type,time.Now(),debit.Currency,debit.Amount,debit.TenantID).Scan(&id)
+	if err != nil {
+		childLogger.Error().Err(err).Msg("Exec statement")
+		return nil, errors.New(err.Error())
+	}
+	//childLogger.Debug().Interface("################# id :", &id).Msg("####################")
+
 	defer stmt.Close()
-	return &debit , nil
+
+	res_debit := core.AccountStatement{}
+	res_debit.ID = id
+
+	return &res_debit , nil
 }
 
 func (w WorkerRepository) List(ctx context.Context, debit core.AccountStatement) (*[]core.AccountStatement, error){
