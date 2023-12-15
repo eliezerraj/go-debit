@@ -1,0 +1,46 @@
+#AWS_DEFAULT_REGION us-east-2
+#EKS_CLUSTER_NAME arch-eks
+#EKS_KUBECTL_ROLE_ARN arn:aws:iam::908671954593:role/CodeBuildKubectlRole
+
+version: 0.2 
+phases: 
+  install: 
+    commands: 
+      - echo Installing app dependencies... 
+      - curl -sS -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/aws-iam-authenticator 
+      - curl -sS -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.20.4/2021-04-12/bin/linux/amd64/kubectl 
+      - chmod +x ./kubectl ./aws-iam-authenticator 
+      - export PATH=$PWD/:$PATH 
+      - apt-get update && apt-get -y install jq python3-pip python3-dev && pip3 install --upgrade awscli 
+      - export KUBECONFIG=$HOME/.kube/config 
+  pre_build: 
+      commands: 
+  build: 
+    commands: 
+  post_build: 
+    commands: 
+      - echo Get Credentials... 
+      - CREDENTIALS=$(aws sts assume-role --role-arn $EKS_KUBECTL_ROLE_ARN --role-session-name codebuild-kubectl --duration-seconds 900) 
+      - export AWS_ACCESS_KEY_ID="$(echo ${CREDENTIALS} | jq -r '.Credentials.AccessKeyId')" 
+      - export AWS_SECRET_ACCESS_KEY="$(echo ${CREDENTIALS} | jq -r '.Credentials.SecretAccessKey')" 
+      - export AWS_SESSION_TOKEN="$(echo ${CREDENTIALS} | jq -r '.Credentials.SessionToken')" 
+      - export AWS_EXPIRATION=$(echo ${CREDENTIALS} | jq -r '.Credentials.Expiration') 
+       
+      - echo Logging in to Amazon EKS... 
+      - echo $EKS_CLUSTER_NAME $AWS_DEFAULT_REGION 
+      - aws eks update-kubeconfig  --name $EKS_CLUSTER_NAME --region $AWS_DEFAULT_REGION 
+      - kubectl version 
+      - kubectl config view --minify 
+       
+      - echo check kubectl access... 
+      - kubectl get deployments 
+       
+      - echo Start manifest deployment..
+      - kubectl apply -f .kubernetes/aws/service-account.yaml 
+      - kubectl apply -f .kubernetes/aws/configmap.yaml
+      - kubectl apply -f .kubernetes/aws/secret_store_service_account.yaml 
+      - kubectl apply -f .kubernetes/aws/external-secret.yaml 
+      - kubectl apply -f .kubernetes/aws/hpa.yaml
+      - kubectl apply -f .kubernetes/aws/ing.yaml
+      - kubectl apply -f .kubernetes/aws/deployment.yaml
+      - kubectl apply -f .kubernetes/aws/svc.yaml
