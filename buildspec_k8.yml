@@ -44,3 +44,6 @@ phases:
       - kubectl apply -f .kubernetes/aws/ing.yaml
       - kubectl apply -f .kubernetes/aws/deployment.yaml
       - kubectl apply -f .kubernetes/aws/svc.yaml
+
+      - echo Start rollout...   
+      - kubectl rollout restart deployment/go-debit -n test-a

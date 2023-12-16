@@ -17,7 +17,7 @@ import (
 func (w WorkerRepository) AddAccountStatementFee(ctx context.Context, tx *sql.Tx ,accountStatementFee core.AccountStatementFee) (*core.AccountStatementFee, error){
 	childLogger.Debug().Msg("AddAccountStatementFee")
 
-	_, root := xray.BeginSubsegment(ctx, "SQL.AddAccountStatementFee")
+	_, root := xray.BeginSubsegment(ctx, "Repository.AddAccountStatementFee")
 	defer func() {
 		root.Close(nil)
 	}()
