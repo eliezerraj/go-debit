@@ -14,5 +14,5 @@ data:
   DB_NAME: "postgres"
   DB_SCHEMA: "public"
   NO_AZ: "true"
-  SERVER_URL_DOMAIN: "http://svc.go-account.test-a.cluster.local:5000"
-  SERVER_URL_DOMAIN2: "http://svc.go-payfee.test-a.cluster.local:5004"
+  SERVER_URL_DOMAIN: "http://svc-go-account.test-a.svc.cluster.local:5000"
+  SERVER_URL_DOMAIN2: "http://svc-go-payfee.test-a.svc.cluster.local:5004"

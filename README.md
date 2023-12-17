@@ -1,8 +1,16 @@
-# go-credit
+# go-debit
 
 POC for test purposes.
 
 CRUD a account_statement data.
+
+Get the fee script from payfee (to calc the fees over the debit transaction)
+
+## Diagram
+
+go-debit (post:add/fund) == (REST) ==> go-account (service.AddFundBalanceAccount) 
+
+go-debit (get:/script/get/{id}) == (REST) ==> go-payfee (service.GetScript)
 
 ## database
 
