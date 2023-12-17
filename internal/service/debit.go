@@ -154,7 +154,7 @@ func (s WorkerService) List(ctx context.Context, debit core.AccountStatement) (*
 	_, root := xray.BeginSubsegment(ctx, "Service.List")
 	defer root.Close(nil)
 
-	rest_interface_data, err := s.restapi.GetData(ctx, s.restapi.ServerUrlDomain ,debit.AccountID, "/get")
+	rest_interface_data, err := s.restapi.GetData(ctx, s.restapi.ServerUrlDomain , "/get" ,debit.AccountID)
 	if err != nil {
 		return nil, err
 	}
