@@ -35,7 +35,7 @@ spec:
             value: xray-service.amazon-cloudwatch:2000
         envFrom:
         - configMapRef:
-            name: go-credit-cm
+            name: go-debit-cm
         volumeMounts:
           - mountPath: "/var/pod/secret"
             name: volume-secret
