@@ -20,4 +20,4 @@ spec:
             service:
               name: svc-go-debit
               port:
-                number: 5001
+                number: 5002
