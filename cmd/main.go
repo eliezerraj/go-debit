@@ -26,7 +26,7 @@ import(
 var(
 	logLevel 	= 	zerolog.DebugLevel
 	noAZ		=	true // set only if you get to split the xray trace per AZ
-	serverUrlDomain, ServerUrlDomain2		string
+	serverUrlDomain, ServerUrlDomain2, xApigwId, xApigwId2		string
 	infoPod					core.InfoPod
 	envDB	 				core.DatabaseRDS
 	httpAppServerConfig 	core.HttpAppServer
@@ -137,8 +137,15 @@ func getEnv() {
 	if os.Getenv("SERVER_URL_DOMAIN") !=  "" {	
 		serverUrlDomain = os.Getenv("SERVER_URL_DOMAIN")
 	}
+	if os.Getenv("X_APIGW_API_ID") !=  "" {	
+		xApigwId = os.Getenv("X_APIGW_API_ID")
+	}
+
 	if os.Getenv("SERVER_URL_DOMAIN2") !=  "" {	
 		ServerUrlDomain2 = os.Getenv("SERVER_URL_DOMAIN2")
+	}
+	if os.Getenv("X_APIGW_API_ID2") !=  "" {	
+		xApigwId2 = os.Getenv("X_APIGW_API_ID2")
 	}
 
 	if os.Getenv("NO_AZ") == "false" {	
@@ -180,7 +187,7 @@ func main() {
 	
 	// Setup workload
 
-	restapi	:= restapi.NewRestApi(serverUrlDomain, ServerUrlDomain2)
+	restapi	:= restapi.NewRestApi(serverUrlDomain, xApigwId, ServerUrlDomain2, xApigwId2)
 
 	httpAppServerConfig.Server = server
 	repoDB = postgre.NewWorkerRepository(dataBaseHelper)
