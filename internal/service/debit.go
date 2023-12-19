@@ -12,7 +12,7 @@ import (
 	"github.com/go-debit/internal/adapter/restapi"
 	"github.com/go-debit/internal/repository/postgre"
 	"github.com/aws/aws-xray-sdk-go/xray"
-
+	"github.com/sony/gobreaker"
 )
 
 var childLogger = log.With().Str("service", "service").Logger()
@@ -20,15 +20,18 @@ var childLogger = log.With().Str("service", "service").Logger()
 type WorkerService struct {
 	workerRepository 		*postgre.WorkerRepository
 	restapi					*restapi.RestApiSConfig
+	circuitBreaker			*gobreaker.CircuitBreaker
 }
 
 func NewWorkerService(	workerRepository 	*postgre.WorkerRepository,
-						restapi				*restapi.RestApiSConfig) *WorkerService{
+						restapi				*restapi.RestApiSConfig,
+						circuitBreaker	*gobreaker.CircuitBreaker) *WorkerService{
 	childLogger.Debug().Msg("NewWorkerService")
 
 	return &WorkerService{
 		workerRepository:	workerRepository,
 		restapi:			restapi,
+		circuitBreaker: 	circuitBreaker,
 	}
 }
 
@@ -114,35 +117,43 @@ func (s WorkerService) Add(ctx context.Context, debit core.AccountStatement) (*c
 	childLogger.Debug().Interface("script_parsed:",script_parsed).Msg("")
 
 	// Get the fees
-	for _, v := range script_parsed.Fee {
-		childLogger.Debug().Interface("v:",v).Msg("")
-
-		res_fee, err := s.restapi.GetData(ctx, s.restapi.ServerUrlDomain2, s.restapi.XApigwId2 ,"/key/get", v)
-		if err != nil {
-			return nil, err
+	_, err = s.circuitBreaker.Execute(func() (interface{}, error) {
+		for _, v := range script_parsed.Fee {
+			childLogger.Debug().Interface("v:",v).Msg("")
+	
+			res_fee, err := s.restapi.GetData(ctx, s.restapi.ServerUrlDomain2, s.restapi.XApigwId2 ,"/key/get", v)
+			if err != nil {
+				return nil, err
+			}
+			childLogger.Debug().Interface("res_fee:",res_fee).Msg("")
+	
+			var fee_parsed core.Fee
+			err = mapstructure.Decode(res_fee, &fee_parsed)
+			if err != nil {
+				childLogger.Error().Err(err).Msg("error parse interface")
+				return nil, errors.New(err.Error())
+			}
+	
+			accountStatementFee := core.AccountStatementFee{}
+			accountStatementFee.FkAccountStatementID = res.ID
+			accountStatementFee.TypeFee = fee_parsed.Name
+			accountStatementFee.ValueFee = fee_parsed.Value
+			accountStatementFee.ChargeAt = time.Now()
+			accountStatementFee.Currency = debit.Currency
+			accountStatementFee.Amount	 = (debit.Amount * (fee_parsed.Value/100))
+			accountStatementFee.TenantID = debit.TenantID
+	
+			_, err = s.workerRepository.AddAccountStatementFee(ctx, tx, accountStatementFee)
+			if err != nil {
+				return nil, err
+			}
 		}
-		childLogger.Debug().Interface("res_fee:",res_fee).Msg("")
-
-		var fee_parsed core.Fee
-		err = mapstructure.Decode(res_fee, &fee_parsed)
-		if err != nil {
-			childLogger.Error().Err(err).Msg("error parse interface")
-			return nil, errors.New(err.Error())
-		}
-
-		accountStatementFee := core.AccountStatementFee{}
-		accountStatementFee.FkAccountStatementID = res.ID
-		accountStatementFee.TypeFee = fee_parsed.Name
-		accountStatementFee.ValueFee = fee_parsed.Value
-		accountStatementFee.ChargeAt = time.Now()
-		accountStatementFee.Currency = debit.Currency
-		accountStatementFee.Amount	 = (debit.Amount * (fee_parsed.Value/100))
-		accountStatementFee.TenantID = debit.TenantID
-
-		_, err = s.workerRepository.AddAccountStatementFee(ctx, tx, accountStatementFee)
-		if err != nil {
-			return nil, err
-		}
+		return nil, nil
+	})
+	if (err != nil) {
+		childLogger.Debug().Msg("--------------------------------------------------")
+		childLogger.Error().Err(err).Msg(" ****** Circuit Breaker OPEN !!! ******")
+		childLogger.Debug().Msg("--------------------------------------------------")
 	}
 
 	return res, nil

@@ -34,25 +34,6 @@ func (w WorkerRepository) Add(ctx context.Context, tx *sql.Tx , debit core.Accou
 		return nil, errors.New(err.Error())
 	}
 
-	/*result, err := stmt.ExecContext(	ctx,
-										debit.FkAccountID, 
-										debit.Type,
-										time.Now(),
-										debit.Currency,
-										debit.Amount,
-										debit.TenantID)
-	if err != nil {
-		childLogger.Error().Err(err).Msg("Exec statement")
-		return nil, errors.New(err.Error())
-	}
-
-	inserted, errRows := result.RowsAffected()
-    if errRows != nil {
-        return nil, errors.New(err.Error())
-    } else if inserted == 0 {
-		return nil, erro.ErrInsert
-    }*/
-
 	var id int
 	err = stmt.QueryRowContext(ctx, debit.FkAccountID,debit.Type,time.Now(),debit.Currency,debit.Amount,debit.TenantID).Scan(&id)
 	if err != nil {
@@ -65,6 +46,7 @@ func (w WorkerRepository) Add(ctx context.Context, tx *sql.Tx , debit core.Accou
 
 	res_debit := core.AccountStatement{}
 	res_debit.ID = id
+	res_debit.ChargeAt = time.Now()
 
 	return &res_debit , nil
 }

@@ -21,4 +21,4 @@ data:
   
   #SERVER_URL_DOMAIN2: "http://svc-go-payfee.test-a.svc.cluster.local:5004"
   SERVER_URL_DOMAIN2: "https://vpce.global.dev.caradhras.io/pv"
-  X_APIGW_API_ID: "5jdsds1yli"
+  X_APIGW_API_ID2: "5jdsds1yli"
