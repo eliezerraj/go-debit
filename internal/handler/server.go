@@ -47,18 +47,17 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *H
 	childLogger.Info().Msg("StartHttpAppServer")
 		
 	myRouter := mux.NewRouter().StrictSlash(true)
+	myRouter.Use(MiddleWareHandlerHeader)
 
 	myRouter.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
 		childLogger.Debug().Msg("/")
 		json.NewEncoder(rw).Encode(h.httpAppServer)
 	})
-	myRouter.Use(MiddleWareHandlerHeader)
 
 	myRouter.HandleFunc("/info", func(rw http.ResponseWriter, req *http.Request) {
 		childLogger.Debug().Msg("/info")
 		json.NewEncoder(rw).Encode(h.httpAppServer)
 	})
-	myRouter.Use(MiddleWareHandlerHeader)
 	
 	health := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
     health.HandleFunc("/health", httpWorkerAdapter.Health)
