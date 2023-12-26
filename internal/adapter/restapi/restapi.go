@@ -65,7 +65,7 @@ func (r *RestApiSConfig) PostData(ctx context.Context, serverUrlDomain string, x
 
 func makeGet(ctx context.Context, url string, xApigwId string ,id interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("makeGet")
-	client := xray.Client(&http.Client{Timeout: time.Second * 29})
+	client := xray.Client(&http.Client{Timeout: time.Second * 5})
 	
 	childLogger.Debug().Str("url : ", url).Msg("")
 	childLogger.Debug().Str("xApigwId : ", xApigwId).Msg("")
@@ -112,7 +112,7 @@ func makeGet(ctx context.Context, url string, xApigwId string ,id interface{}) (
 
 func makePost(ctx context.Context, url string, xApigwId string ,data interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("makePost")
-	client := xray.Client(&http.Client{Timeout: time.Second * 29})
+	client := xray.Client(&http.Client{Timeout: time.Second * 5})
 	
 	childLogger.Debug().Str("url : ", url).Msg("")
 	childLogger.Debug().Str("xApigwId : ", xApigwId).Msg("")
