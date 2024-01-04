@@ -178,6 +178,8 @@ func (s WorkerService) List(ctx context.Context, debit core.AccountStatement) (*
     }
 
 	debit.FkAccountID = account_parsed.ID
+	debit.Type = "DEBIT"
+
 	res, err := s.workerRepository.List(ctx, debit)
 	if err != nil {
 		return nil, err

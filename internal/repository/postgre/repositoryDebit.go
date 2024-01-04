@@ -72,7 +72,7 @@ func (w WorkerRepository) List(ctx context.Context, debit core.AccountStatement)
 													amount,																										
 													tenant_id	
 											FROM account_statement 
-											WHERE fk_account_id =$1 order by charged_at desc`, debit.FkAccountID)
+											WHERE fk_account_id =$1 and type_charge= $2 order by charged_at desc`, debit.FkAccountID, debit.Type )
 		if err != nil {
 		childLogger.Error().Err(err).Msg("SELECT statement")
 		return nil, errors.New(err.Error())
