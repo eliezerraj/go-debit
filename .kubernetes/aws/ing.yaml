@@ -21,13 +21,3 @@ spec:
               name: svc-go-debit
               port:
                 number: 5002
-    - host: go-debit-pv.architecture.caradhras.io
-      http:
-        paths:
-        - path: /
-          pathType: Prefix
-          backend:
-            service:
-              name: svc-go-debit
-              port:
-                number: 5002
