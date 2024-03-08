@@ -49,6 +49,8 @@ go-debit (get:/script/get/{id}) == (REST) ==> go-payfee (service.GetScript)
 
 + GET /header
 
++ GET /info
+
 + GET /list/ACC-1
 
         curl svc01.domain.com/list/ACC-1 | jq
