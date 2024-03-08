@@ -69,7 +69,8 @@ func (s WorkerService) Add(ctx context.Context, debit core.AccountStatement) (*c
 
 	debit.Type = "DEBIT"
 	if debit.Amount > 0 {
-		return nil, erro.ErrInvalidAmount
+		err = erro.ErrInvalidAmount
+		return nil, err
 	}
 
 	// Get 
