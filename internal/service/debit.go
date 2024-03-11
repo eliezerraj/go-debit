@@ -73,7 +73,7 @@ func (s WorkerService) Add(ctx context.Context, debit core.AccountStatement) (*c
 		return nil, err
 	}
 
-	// Get 
+	// Get account data
 	rest_interface_data, err := s.restapi.GetData(ctx, s.restapi.ServerUrlDomain, s.restapi.XApigwId,"/get", debit.AccountID )
 	if err != nil {
 		return nil, err
