@@ -27,6 +27,7 @@ func NewRestApi(serverUrlDomain string,
 				ServerUrlDomain2 string,
 				xApigwId2		string) (*RestApiSConfig){
 	childLogger.Debug().Msg("*** NewRestApi")
+	
 	return &RestApiSConfig {
 		ServerUrlDomain: 	serverUrlDomain,
 		ServerUrlDomain2: 	ServerUrlDomain2,
@@ -35,7 +36,11 @@ func NewRestApi(serverUrlDomain string,
 	}
 }
 
-func (r *RestApiSConfig) GetData(ctx context.Context, serverUrlDomain string, xApigwId string, path string, id string,) (interface{}, error) {
+func (r *RestApiSConfig) GetData(ctx context.Context, 
+								serverUrlDomain string, 
+								xApigwId string, 
+								path string, 
+								id string,) (interface{}, error) {
 	childLogger.Debug().Msg("GetData")
 
 	domain := serverUrlDomain + path +"/" + id
@@ -49,7 +54,11 @@ func (r *RestApiSConfig) GetData(ctx context.Context, serverUrlDomain string, xA
 	return data_interface, nil
 }
 
-func (r *RestApiSConfig) PostData(ctx context.Context, serverUrlDomain string, xApigwId string, path string ,data interface{}) (interface{}, error) {
+func (r *RestApiSConfig) PostData(ctx context.Context, 
+									serverUrlDomain string, 
+									xApigwId string, 
+									path string,
+									data interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("PostData")
 
 	domain := serverUrlDomain + path 
@@ -63,7 +72,11 @@ func (r *RestApiSConfig) PostData(ctx context.Context, serverUrlDomain string, x
 	return data_interface, nil
 }
 
-func makeGet(ctx context.Context, url string, xApigwId string ,id interface{}) (interface{}, error) {
+func makeGet(ctx context.Context, 
+			url string, 
+			xApigwId string,
+			id interface{}) (interface{}, error) {
+
 	childLogger.Debug().Msg("makeGet")
 	client := xray.Client(&http.Client{Timeout: time.Second * 5})
 	
@@ -110,7 +123,10 @@ func makeGet(ctx context.Context, url string, xApigwId string ,id interface{}) (
 	return result, nil
 }
 
-func makePost(ctx context.Context, url string, xApigwId string ,data interface{}) (interface{}, error) {
+func makePost(	ctx context.Context, 
+				url string, 
+				xApigwId string,
+				data interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("makePost")
 	client := xray.Client(&http.Client{Timeout: time.Second * 5})
 	

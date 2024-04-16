@@ -33,7 +33,7 @@ phases:
       - kubectl config view --minify 
        
       - echo check kubectl access... 
-      - kubectl get deployments 
+      - kubectl get deployments -n test-a
        
       - echo Start manifest deployment..
       - kubectl apply -f .kubernetes/aws/service-account.yaml 
