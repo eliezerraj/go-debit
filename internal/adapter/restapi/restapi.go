@@ -13,30 +13,20 @@ import(
 	"github.com/aws/aws-xray-sdk-go/xray"
 )
 
-var childLogger = log.With().Str("adapter/restapi", "restapi").Logger()
+var childLogger = log.With().Str("adapter/restapi", "restApiService").Logger()
 
-type RestApiSConfig struct {
-	ServerUrlDomain			string
-	XApigwId				string
-	ServerUrlDomain2		string
-	XApigwId2				string
+type RestApiService struct {
+
 }
 
-func NewRestApi(serverUrlDomain string, 
-				xApigwId		string,
-				ServerUrlDomain2 string,
-				xApigwId2		string) (*RestApiSConfig){
-	childLogger.Debug().Msg("*** NewRestApi")
+func NewRestApiService() (*RestApiService){
+	childLogger.Debug().Msg("*** NewRestApiService")
 	
-	return &RestApiSConfig {
-		ServerUrlDomain: 	serverUrlDomain,
-		ServerUrlDomain2: 	ServerUrlDomain2,
-		XApigwId:			xApigwId,
-		XApigwId2:			xApigwId2,
+	return &RestApiService {
 	}
 }
 
-func (r *RestApiSConfig) GetData(ctx context.Context, 
+func (r *RestApiService) GetData(ctx context.Context, 
 								serverUrlDomain string, 
 								xApigwId string, 
 								path string, 
@@ -54,7 +44,7 @@ func (r *RestApiSConfig) GetData(ctx context.Context,
 	return data_interface, nil
 }
 
-func (r *RestApiSConfig) PostData(ctx context.Context, 
+func (r *RestApiService) PostData(ctx context.Context, 
 									serverUrlDomain string, 
 									xApigwId string, 
 									path string,

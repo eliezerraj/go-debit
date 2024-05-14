@@ -14,7 +14,9 @@ import (
 
 )
 
-func (w WorkerRepository) Add(ctx context.Context, tx *sql.Tx , debit core.AccountStatement) (*core.AccountStatement, error){
+func (w WorkerRepository) Add(	ctx context.Context, 
+								tx *sql.Tx, 
+								debit core.AccountStatement) (*core.AccountStatement, error){
 	childLogger.Debug().Msg("Add")
 
 	_, root := xray.BeginSubsegment(ctx, "Repository.Add")

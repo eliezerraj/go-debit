@@ -6,19 +6,21 @@ metadata:
   labels:
     app: *app-name
 data:
-  API_VERSION: "1.1"
-  POD_NAME: "go-debit"
+  API_VERSION: "2.0"
+  POD_NAME: "go-debit.k8"
   PORT: "5002"
   DB_HOST: "rds-proxy-db-arch.proxy-couoacqalfwt.us-east-2.rds.amazonaws.com"
   DB_PORT: "5432"
   DB_NAME: "postgres"
   DB_SCHEMA: "public"
   DB_DRIVER: "postgres"
-  NO_AZ: "true"
-  #SERVER_URL_DOMAIN: "http://svc-go-account.test-a.svc.cluster.local:5000"
-  SERVER_URL_DOMAIN: "https://vpce.global.dev.caradhras.io/pv"
+  SETPOD_AZ: "false"
+
+  SERVICE_URL_DOMAIN: "https://vpce.global.dev.caradhras.io/pv"
   X_APIGW_API_ID: "129t4y8eoj"
-  
+
+  SERVICE_URL_DOMAIN_PAY_FEE: "https://vpce.global.dev.caradhras.io/pv"
+  X_APIGW_API_PAY_FEE: "5jdsds1yli"
+
+  #SERVER_URL_DOMAIN: "http://svc-go-account.test-a.svc.cluster.local:5000"
   #SERVER_URL_DOMAIN2: "http://svc-go-payfee.test-a.svc.cluster.local:5004"
-  SERVER_URL_DOMAIN2: "https://vpce.global.dev.caradhras.io/pv"
-  X_APIGW_API_ID2: "5jdsds1yli"

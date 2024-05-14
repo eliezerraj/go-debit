@@ -18,32 +18,32 @@ import (
 	"github.com/aws/aws-xray-sdk-go/xray"
 
 )
-
+//--------------------------------------------------------
 type HttpWorkerAdapter struct {
 	workerService 	*service.WorkerService
 }
 
-func NewHttpWorkerAdapter(workerService *service.WorkerService) *HttpWorkerAdapter {
+func NewHttpWorkerAdapter(workerService *service.WorkerService) HttpWorkerAdapter {
 	childLogger.Debug().Msg("NewHttpWorkerAdapter")
-	return &HttpWorkerAdapter{
+
+	return HttpWorkerAdapter{
 		workerService: workerService,
 	}
 }
-
+//--------------------------------------------------------
 type HttpServer struct {
-	start 			time.Time
-	httpAppServer 	core.HttpAppServer
+	httpServer	*core.Server
 }
 
-func NewHttpAppServer(httpAppServer core.HttpAppServer) HttpServer {
+func NewHttpAppServer(httpServer *core.Server) HttpServer {
 	childLogger.Debug().Msg("NewHttpAppServer")
 
-	return HttpServer{	start: time.Now(), 
-						httpAppServer: httpAppServer,
-					}
+	return HttpServer{httpServer: httpServer }
 }
-
-func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *HttpWorkerAdapter) {
+//--------------------------------------------------------
+func (h HttpServer) StartHttpAppServer(ctx context.Context, 
+										httpWorkerAdapter *HttpWorkerAdapter,
+										appServer *core.AppServer) {
 	childLogger.Info().Msg("StartHttpAppServer")
 		
 	myRouter := mux.NewRouter().StrictSlash(true)
@@ -51,12 +51,12 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *H
 
 	myRouter.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
 		childLogger.Debug().Msg("/")
-		json.NewEncoder(rw).Encode(h.httpAppServer)
+		json.NewEncoder(rw).Encode(appServer)
 	})
 
 	myRouter.HandleFunc("/info", func(rw http.ResponseWriter, req *http.Request) {
 		childLogger.Debug().Msg("/info")
-		json.NewEncoder(rw).Encode(h.httpAppServer)
+		json.NewEncoder(rw).Encode(appServer)
 	})
 	
 	health := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
@@ -71,7 +71,7 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *H
 
 	addDebit := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
 	addDebit.Handle("/add", 
-						xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "debit:", h.httpAppServer.InfoPod.AvailabilityZone, ".add")), 
+						xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "debit:", appServer.InfoPod.AvailabilityZone, ".add")), 
 						http.HandlerFunc(httpWorkerAdapter.Add),
 						),
 	)
@@ -79,21 +79,21 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *H
 
 	listDebit := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
 	listDebit.Handle("/list/{id}", 
-						xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "debit:", h.httpAppServer.InfoPod.AvailabilityZone, ".list")),
+						xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "debit:", appServer.InfoPod.AvailabilityZone, ".list")),
 						http.HandlerFunc(httpWorkerAdapter.List),
 						),
 	)
 	listDebit.Use(MiddleWareHandlerHeader)
 	
 	srv := http.Server{
-		Addr:         ":" +  strconv.Itoa(h.httpAppServer.Server.Port),      	
+		Addr:         ":" +  strconv.Itoa(h.httpServer.Port),      	
 		Handler:      myRouter,                	          
-		ReadTimeout:  time.Duration(h.httpAppServer.Server.ReadTimeout) * time.Second,   
-		WriteTimeout: time.Duration(h.httpAppServer.Server.WriteTimeout) * time.Second,  
-		IdleTimeout:  time.Duration(h.httpAppServer.Server.IdleTimeout) * time.Second, 
+		ReadTimeout:  time.Duration(h.httpServer.ReadTimeout) * time.Second,   
+		WriteTimeout: time.Duration(h.httpServer.WriteTimeout) * time.Second,  
+		IdleTimeout:  time.Duration(h.httpServer.IdleTimeout) * time.Second, 
 	}
 
-	childLogger.Info().Str("Service Port : ", strconv.Itoa(h.httpAppServer.Server.Port)).Msg("Service Port")
+	childLogger.Info().Str("Service Port : ", strconv.Itoa(h.httpServer.Port)).Msg("Service Port")
 
 	go func() {
 		err := srv.ListenAndServe()
