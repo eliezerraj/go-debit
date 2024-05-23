@@ -58,7 +58,7 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context,
 		childLogger.Debug().Msg("/info")
 		json.NewEncoder(rw).Encode(appServer)
 	})
-	
+
 	health := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
     health.HandleFunc("/health", httpWorkerAdapter.Health)
 
@@ -67,7 +67,6 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context,
 
 	header := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
     header.HandleFunc("/header", httpWorkerAdapter.Header)
-	header.Use(MiddleWareHandlerHeader)
 
 	addDebit := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
 	addDebit.Handle("/add", 

@@ -14,7 +14,7 @@ import(
 )
 
 var childLogger = log.With().Str("adapter/restapi", "restApiService").Logger()
-
+//-------------------------------------
 type RestApiService struct {
 
 }
@@ -25,7 +25,7 @@ func NewRestApiService() (*RestApiService){
 	return &RestApiService {
 	}
 }
-
+//------------------------------------------
 func (r *RestApiService) GetData(ctx context.Context, 
 								serverUrlDomain string, 
 								xApigwId string, 

@@ -8,7 +8,7 @@ import(
 )
 
 func GetOtelEnv() core.ConfigOTEL {
-	childLogger.Debug().Msg("GetCertEnv")
+	childLogger.Debug().Msg("GetOtelEnv")
 
 	err := godotenv.Load(".env")
 	if err != nil {

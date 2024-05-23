@@ -2,7 +2,7 @@
 
 POC for test purposes.
 
-CRUD a account_statement data.
+CRUD a account_statement data synchronoius (REST)
 
 Get the fee script from payfee (to calc the fees over the debit transaction)
 
@@ -14,26 +14,29 @@ go-debit (get:/script/get/{id}) == (REST) ==> go-payfee (service.GetScript)
 
 ## database
 
-    CREATE TABLE account_statement (
-        id              SERIAL PRIMARY KEY,
-        fk_account_id   integer REFERENCES account(id),
-        type_charge     varchar(200) NULL,
-        charged_at      timestamptz NULL,
-        currency        varchar(10) NULL,   
-        amount          float8 NULL,
-        tenant_id       varchar(200) NULL
+    CREATE TABLE public.account_statement (
+        id serial4 NOT NULL,
+        fk_account_id int4 NULL,
+        type_charge varchar(200) NULL,
+        charged_at timestamptz NULL,
+        currency varchar(10) NULL,
+        amount float8 NULL,
+        tenant_id varchar(200) NULL,
+        CONSTRAINT account_statement_pkey PRIMARY KEY (id)
     );
 
-    CREATE TABLE account_statement_fee (
-        id              SERIAL PRIMARY KEY,
-        fk_account_statement_id   integer REFERENCES account_statement(id),
-        charged_at      timestamptz NULL,
-        type_fee        varchar(200) NULL,
-        value_fee       float8 NULL,
-        currency        varchar(10) NULL,   
-        amount          float8 NULL,
-        tenant_id       varchar(200) NULL
+    CREATE TABLE public.account_statement_fee (
+        id serial4 NOT NULL,
+        fk_account_statement_id int4 NULL,
+        charged_at timestamptz NULL,
+        type_fee varchar(200) NULL,
+        value_fee float8 NULL,
+        currency varchar(10) NULL,
+        amount float8 NULL,
+        tenant_id varchar(200) NULL,
+        CONSTRAINT account_statement_fee_pkey PRIMARY KEY (id)
     );
+
 
 ## Endpoints
 
