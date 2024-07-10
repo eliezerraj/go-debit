@@ -59,15 +59,15 @@ func (r *RestApiService) PostData(	ctx context.Context,
 func makeGet(ctx context.Context, 
 			url string, 
 			xApigwId string,
-			id interface{}) (interface{}, error) {
+			data interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("makeGet")
-	client := &http.Client{Timeout: time.Second * 10}
-	
 	childLogger.Debug().Str("url : ", url).Msg("")
 	childLogger.Debug().Str("xApigwId : ", xApigwId).Msg("")
 
 	span := lib.Span(ctx, url)	
     defer span.End()
+
+	client := &http.Client{Timeout: time.Second * 10}
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -100,7 +100,7 @@ func makeGet(ctx context.Context,
 			return false, erro.ErrServer
 	}
 
-	result := id
+	result := data
 	err = json.NewDecoder(resp.Body).Decode(&result)
     if err != nil {
 		childLogger.Error().Err(err).Msg("error no ErrUnmarshal")
@@ -115,15 +115,14 @@ func makePost(	ctx context.Context,
 				xApigwId string,
 				data interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("makePost")
+	childLogger.Debug().Str("url : ", url).Msg("")
+	childLogger.Debug().Str("xApigwId : ", xApigwId).Msg("")
 
 	span := lib.Span(ctx, url)	
     defer span.End()
 
 	client := &http.Client{Timeout: time.Second * 5}
 	
-	childLogger.Debug().Str("url : ", url).Msg("")
-	childLogger.Debug().Str("xApigwId : ", xApigwId).Msg("")
-
 	payload := new(bytes.Buffer)
 	json.NewEncoder(payload).Encode(data)
 
