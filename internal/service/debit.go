@@ -9,9 +9,9 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/go-debit/internal/core"
 	"github.com/go-debit/internal/erro"
+	"github.com/go-debit/internal/lib"
 	"github.com/go-debit/internal/adapter/restapi"
 	"github.com/go-debit/internal/repository/postgre"
-	"github.com/aws/aws-xray-sdk-go/xray"
 	"github.com/sony/gobreaker"
 )
 
@@ -56,7 +56,7 @@ func (s WorkerService) Add(	ctx context.Context,
 	childLogger.Debug().Msg("--------------- Add ------------------------")
 	childLogger.Debug().Interface("1) debit :",debit).Msg("")
 
-	_, root := xray.BeginSubsegment(ctx, "Service.Add")
+	span := lib.Span(ctx, "service.Add")	
 
 	tx, err := s.workerRepository.StartTx(ctx)
 	if err != nil {
@@ -69,7 +69,7 @@ func (s WorkerService) Add(	ctx context.Context,
 		} else {
 			tx.Commit()
 		}
-		root.Close(nil)
+		span.End()
 	}()
 
 	debit.Type = "DEBIT"
@@ -79,11 +79,8 @@ func (s WorkerService) Add(	ctx context.Context,
 	}
 
 	// Get account data
-	rest_interface_data, err := s.restApiService.GetData(	ctx, 
-															s.restEndpoint.ServiceUrlDomain, 
-															s.restEndpoint.XApigwId,
-															"/get", 
-															debit.AccountID )
+	urlDomain := s.restEndpoint.ServiceUrlDomain + "/get/"  + debit.AccountID
+	rest_interface_data, err := s.restApiService.GetData(ctx, urlDomain, s.restEndpoint.XApigwId, debit.AccountID )
 	if err != nil {
 		return nil, err
 	}
@@ -107,21 +104,18 @@ func (s WorkerService) Add(	ctx context.Context,
 	debit.ID = res.ID
 	debit.ChargeAt = res.ChargeAt
 
-	_, err = s.restApiService.PostData(ctx, 
-										s.restEndpoint.ServiceUrlDomain, 
-										s.restEndpoint.XApigwId,
-										"/add/fund", 
-										debit)
+	urlDomain = s.restEndpoint.ServiceUrlDomain + "/add/fund"
+	_, err = s.restApiService.PostData(ctx, urlDomain, s.restEndpoint.XApigwId, debit)
 	if err != nil {
 		return nil, err
 	}
 	
 	// Get financial script
+	urlDomain = s.restEndpoint.ServiceUrlDomainPayFee + "/script/get/script.debit"
 	script := "script.debit"
 	res_script, err := s.restApiService.GetData(ctx, 
-												s.restEndpoint.ServiceUrlDomainPayFee, 
+												urlDomain, 
 												s.restEndpoint.XApigwIdPayFee,
-												"/script/get", 
 												script)
 	if err != nil {
 		return nil, err
@@ -141,11 +135,8 @@ func (s WorkerService) Add(	ctx context.Context,
 		for _, v := range script_parsed.Fee {
 			childLogger.Debug().Interface("v:",v).Msg("")
 	
-			res_fee, err := s.restApiService.GetData(	ctx, 
-														s.restEndpoint.ServiceUrlDomainPayFee, 
-														s.restEndpoint.XApigwIdPayFee,
-														"/key/get", 
-														v)
+			urlDomain = s.restEndpoint.ServiceUrlDomainPayFee + "/key/get/" + v
+			res_fee, err := s.restApiService.GetData(ctx, urlDomain,s.restEndpoint.XApigwIdPayFee, v)
 			if err != nil {
 				return nil, err
 			}
@@ -188,14 +179,11 @@ func (s WorkerService) Add(	ctx context.Context,
 func (s WorkerService) List(ctx context.Context, debit core.AccountStatement) (*[]core.AccountStatement, error){
 	childLogger.Debug().Msg("List")
 
-	_, root := xray.BeginSubsegment(ctx, "Service.List")
-	defer root.Close(nil)
+	span := lib.Span(ctx, "service.List")	
+    defer span.End()
 
-	rest_interface_data, err := s.restApiService.GetData(	ctx, 
-													s.restEndpoint.ServiceUrlDomain, 
-													s.restEndpoint.XApigwId, 
-													"/get",
-													debit.AccountID)
+	urlDomain := s.restEndpoint.ServiceUrlDomain + "/get/" + debit.AccountID
+	rest_interface_data, err := s.restApiService.GetData(ctx, urlDomain, s.restEndpoint.XApigwId, debit.AccountID)
 	if err != nil {
 		return nil, err
 	}

@@ -21,6 +21,8 @@ data:
 
   SERVICE_URL_DOMAIN_PAY_FEE: "https://vpce.global.dev.caradhras.io/pv"
   X_APIGW_API_PAY_FEE: "5jdsds1yli"
+  
+  OTEL_EXPORTER_OTLP_ENDPOINT: "arch-eks-01-xray-collector.default.svc.cluster.local:4317"
 
   #SERVER_URL_DOMAIN: "http://svc-go-account.test-a.svc.cluster.local:5000"
   #SERVER_URL_DOMAIN2: "http://svc-go-payfee.test-a.svc.cluster.local:5004"

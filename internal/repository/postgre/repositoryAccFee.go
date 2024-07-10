@@ -10,17 +10,14 @@ import (
 
 	"github.com/go-debit/internal/erro"
 	"github.com/go-debit/internal/core"
-	"github.com/aws/aws-xray-sdk-go/xray"
-
+	"github.com/go-debit/internal/lib"
 )
 
 func (w WorkerRepository) AddAccountStatementFee(ctx context.Context, tx *sql.Tx ,accountStatementFee core.AccountStatementFee) (*core.AccountStatementFee, error){
 	childLogger.Debug().Msg("AddAccountStatementFee")
 
-	_, root := xray.BeginSubsegment(ctx, "Repository.AddAccountStatementFee")
-	defer func() {
-		root.Close(nil)
-	}()
+	span := lib.Span(ctx, "repo.AddAccountStatementFee")	
+    defer span.End()
 
 	stmt, err := tx.Prepare(`INSERT INTO account_statement_fee ( 	fk_account_statement_id, 
 																	charged_at,

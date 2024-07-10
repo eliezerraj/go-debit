@@ -8,10 +8,8 @@ import (
 	_ "github.com/lib/pq"
 	"database/sql"
 
-	//"github.com/go-debit/internal/erro"
 	"github.com/go-debit/internal/core"
-	"github.com/aws/aws-xray-sdk-go/xray"
-
+	"github.com/go-debit/internal/lib"
 )
 
 func (w WorkerRepository) Add(	ctx context.Context, 
@@ -19,10 +17,8 @@ func (w WorkerRepository) Add(	ctx context.Context,
 								debit core.AccountStatement) (*core.AccountStatement, error){
 	childLogger.Debug().Msg("Add")
 
-	_, root := xray.BeginSubsegment(ctx, "Repository.Add")
-	defer func() {
-		root.Close(nil)
-	}()
+	span := lib.Span(ctx, "repo.Add")	
+    defer span.End()
 
 	stmt, err := tx.Prepare(`INSERT INTO account_statement ( 	fk_account_id, 
 																type_charge,
@@ -56,10 +52,8 @@ func (w WorkerRepository) Add(	ctx context.Context,
 func (w WorkerRepository) List(ctx context.Context, debit core.AccountStatement) (*[]core.AccountStatement, error){
 	childLogger.Debug().Msg("List")
 
-	_, root := xray.BeginSubsegment(ctx, "Repository.List.Account")
-	defer func() {
-		root.Close(nil)
-	}()
+	span := lib.Span(ctx, "repo.List")	
+    defer span.End()
 
 	client:= w.databaseHelper.GetConnection()
 	

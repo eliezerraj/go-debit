@@ -9,14 +9,16 @@ import (
 	"os/signal"
 	"syscall"
 	"context"
-	"fmt"
 
 	"github.com/gorilla/mux"
 
 	"github.com/go-debit/internal/service"
 	"github.com/go-debit/internal/core"
-	"github.com/aws/aws-xray-sdk-go/xray"
+	"github.com/go-debit/internal/lib"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/contrib/propagators/aws/xray"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 )
 //--------------------------------------------------------
 type HttpWorkerAdapter struct {
@@ -45,7 +47,19 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context,
 										httpWorkerAdapter *HttpWorkerAdapter,
 										appServer *core.AppServer) {
 	childLogger.Info().Msg("StartHttpAppServer")
-		
+	// ---------------------- OTEL ---------------
+	childLogger.Info().Str("OTEL_EXPORTER_OTLP_ENDPOINT :", appServer.ConfigOTEL.OtelExportEndpoint).Msg("")
+	
+	tp := lib.NewTracerProvider(ctx, appServer.ConfigOTEL, appServer.InfoPod)
+	defer func() { 
+		err := tp.Shutdown(ctx)
+		if err != nil{
+			childLogger.Error().Err(err).Msg("Erro closing OTEL tracer !!!")
+		}
+	}()
+	otel.SetTextMapPropagator(xray.Propagator{})
+	otel.SetTracerProvider(tp)
+
 	myRouter := mux.NewRouter().StrictSlash(true)
 	myRouter.Use(MiddleWareHandlerHeader)
 
@@ -56,6 +70,7 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context,
 
 	myRouter.HandleFunc("/info", func(rw http.ResponseWriter, req *http.Request) {
 		childLogger.Debug().Msg("/info")
+		rw.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(rw).Encode(appServer)
 	})
 
@@ -67,23 +82,20 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context,
 
 	header := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
     header.HandleFunc("/header", httpWorkerAdapter.Header)
+	header.Use(otelmux.Middleware("go-debit"))
 
 	addDebit := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
 	addDebit.Handle("/add", 
-						xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "debit:", appServer.InfoPod.AvailabilityZone, ".add")), 
-						http.HandlerFunc(httpWorkerAdapter.Add),
-						),
-	)
+						http.HandlerFunc(httpWorkerAdapter.Add),)
 	addDebit.Use(httpWorkerAdapter.DecoratorDB)
+	addDebit.Use(otelmux.Middleware("go-debit"))
 
 	listDebit := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
 	listDebit.Handle("/list/{id}", 
-						xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "debit:", appServer.InfoPod.AvailabilityZone, ".list")),
-						http.HandlerFunc(httpWorkerAdapter.List),
-						),
-	)
+						http.HandlerFunc(httpWorkerAdapter.List),)
 	listDebit.Use(MiddleWareHandlerHeader)
-	
+	listDebit.Use(otelmux.Middleware("go-debit"))
+
 	srv := http.Server{
 		Addr:         ":" +  strconv.Itoa(h.httpServer.Port),      	
 		Handler:      myRouter,                	          

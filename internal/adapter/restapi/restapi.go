@@ -10,7 +10,7 @@ import(
 
 	"github.com/rs/zerolog/log"
 	"github.com/go-debit/internal/erro"
-	"github.com/aws/aws-xray-sdk-go/xray"
+	"github.com/go-debit/internal/lib"
 )
 
 var childLogger = log.With().Str("adapter/restapi", "restApiService").Logger()
@@ -27,15 +27,12 @@ func NewRestApiService() (*RestApiService){
 }
 //------------------------------------------
 func (r *RestApiService) GetData(ctx context.Context, 
-								serverUrlDomain string, 
+								urlDomain string, 
 								xApigwId string, 
-								path string, 
-								id string,) (interface{}, error) {
+								data interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("GetData")
 
-	domain := serverUrlDomain + path +"/" + id
-
-	data_interface, err := makeGet(ctx, domain, xApigwId, id)
+	data_interface, err := makeGet(ctx, urlDomain, xApigwId, data)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("error Request")
 		return nil, errors.New(err.Error())
@@ -44,16 +41,13 @@ func (r *RestApiService) GetData(ctx context.Context,
 	return data_interface, nil
 }
 
-func (r *RestApiService) PostData(ctx context.Context, 
-									serverUrlDomain string, 
+func (r *RestApiService) PostData(	ctx context.Context, 
+									urlDomain string, 
 									xApigwId string, 
-									path string,
 									data interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("PostData")
 
-	domain := serverUrlDomain + path 
-
-	data_interface, err := makePost(ctx, domain, xApigwId, data)
+	data_interface, err := makePost(ctx, urlDomain, xApigwId, data)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("error Request")
 		return nil, errors.New(err.Error())
@@ -66,12 +60,14 @@ func makeGet(ctx context.Context,
 			url string, 
 			xApigwId string,
 			id interface{}) (interface{}, error) {
-
 	childLogger.Debug().Msg("makeGet")
-	client := xray.Client(&http.Client{Timeout: time.Second * 5})
+	client := &http.Client{Timeout: time.Second * 10}
 	
 	childLogger.Debug().Str("url : ", url).Msg("")
 	childLogger.Debug().Str("xApigwId : ", xApigwId).Msg("")
+
+	span := lib.Span(ctx, url)	
+    defer span.End()
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -87,6 +83,7 @@ func makeGet(ctx context.Context,
 		childLogger.Error().Err(err).Msg("error Do Request")
 		return false, errors.New(err.Error())
 	}
+	defer resp.Body.Close()
 
 	childLogger.Debug().Int("StatusCode :", resp.StatusCode).Msg("")
 	switch (resp.StatusCode) {
@@ -118,7 +115,11 @@ func makePost(	ctx context.Context,
 				xApigwId string,
 				data interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("makePost")
-	client := xray.Client(&http.Client{Timeout: time.Second * 5})
+
+	span := lib.Span(ctx, url)	
+    defer span.End()
+
+	client := &http.Client{Timeout: time.Second * 5}
 	
 	childLogger.Debug().Str("url : ", url).Msg("")
 	childLogger.Debug().Str("xApigwId : ", xApigwId).Msg("")
@@ -140,7 +141,8 @@ func makePost(	ctx context.Context,
 		childLogger.Error().Err(err).Msg("error Do Request")
 		return false, errors.New(err.Error())
 	}
-
+	defer resp.Body.Close()
+	
 	childLogger.Debug().Int("StatusCode :", resp.StatusCode).Msg("")
 	switch (resp.StatusCode) {
 		case 401:
