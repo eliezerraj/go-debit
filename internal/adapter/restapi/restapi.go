@@ -11,6 +11,8 @@ import(
 	"github.com/rs/zerolog/log"
 	"github.com/go-debit/internal/erro"
 	"github.com/go-debit/internal/lib"
+
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var childLogger = log.With().Str("adapter/restapi", "restApiService").Logger()
@@ -31,6 +33,9 @@ func (r *RestApiService) GetData(ctx context.Context,
 								xApigwId string, 
 								data interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("GetData")
+	
+	span := lib.Span(ctx, "adapter.GetData")	
+    defer span.End()
 
 	data_interface, err := makeGet(ctx, urlDomain, xApigwId, data)
 	if err != nil {
@@ -46,6 +51,9 @@ func (r *RestApiService) PostData(	ctx context.Context,
 									xApigwId string, 
 									data interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("PostData")
+
+	span := lib.Span(ctx, "adapter.PostData")	
+    defer span.End()
 
 	data_interface, err := makePost(ctx, urlDomain, xApigwId, data)
 	if err != nil {
@@ -64,10 +72,13 @@ func makeGet(ctx context.Context,
 	childLogger.Debug().Str("url : ", url).Msg("")
 	childLogger.Debug().Str("xApigwId : ", xApigwId).Msg("")
 
-	span := lib.Span(ctx, url)	
+	span := lib.Span(ctx, "adapter.GetData.makeGet: " + url)	
     defer span.End()
 
-	client := &http.Client{Timeout: time.Second * 10}
+	client := &http.Client{
+		Transport: otelhttp.NewTransport(http.DefaultTransport),
+		Timeout: time.Second * 10,
+	}
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -118,10 +129,13 @@ func makePost(	ctx context.Context,
 	childLogger.Debug().Str("url : ", url).Msg("")
 	childLogger.Debug().Str("xApigwId : ", xApigwId).Msg("")
 
-	span := lib.Span(ctx, url)	
+	span := lib.Span(ctx, "adapter.GetData.makeGet: " + url)	
     defer span.End()
 
-	client := &http.Client{Timeout: time.Second * 5}
+	client := &http.Client{
+		Transport: otelhttp.NewTransport(http.DefaultTransport),
+		Timeout: time.Second * 10,
+	}
 	
 	payload := new(bytes.Buffer)
 	json.NewEncoder(payload).Encode(data)

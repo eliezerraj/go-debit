@@ -62,6 +62,7 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context,
 
 	myRouter := mux.NewRouter().StrictSlash(true)
 	myRouter.Use(MiddleWareHandlerHeader)
+	myRouter.Use(otelmux.Middleware("go-debit"))
 
 	myRouter.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
 		childLogger.Debug().Msg("/")
@@ -82,19 +83,16 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context,
 
 	header := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
     header.HandleFunc("/header", httpWorkerAdapter.Header)
-	header.Use(otelmux.Middleware("go-debit"))
 
 	addDebit := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
 	addDebit.Handle("/add", 
 						http.HandlerFunc(httpWorkerAdapter.Add),)
 	addDebit.Use(httpWorkerAdapter.DecoratorDB)
-	addDebit.Use(otelmux.Middleware("go-debit"))
 
 	listDebit := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
 	listDebit.Handle("/list/{id}", 
 						http.HandlerFunc(httpWorkerAdapter.List),)
 	listDebit.Use(MiddleWareHandlerHeader)
-	listDebit.Use(otelmux.Middleware("go-debit"))
 
 	srv := http.Server{
 		Addr:         ":" +  strconv.Itoa(h.httpServer.Port),      	

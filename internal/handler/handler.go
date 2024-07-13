@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-debit/internal/core"
 	"github.com/go-debit/internal/erro"
-	
+	"github.com/go-debit/internal/lib"
 )
 
 var childLogger = log.With().Str("handler", "handler").Logger()
@@ -98,6 +98,9 @@ func (h *HttpWorkerAdapter) Header(rw http.ResponseWriter, req *http.Request) {
 func (h *HttpWorkerAdapter) Add( rw http.ResponseWriter, req *http.Request) {
 	childLogger.Debug().Msg("Add")
 
+	span := lib.Span(req.Context(), "handler.Add")
+	defer span.End()
+
 	debit := core.AccountStatement{}
 	err := json.NewDecoder(req.Body).Decode(&debit)
     if err != nil {
@@ -126,6 +129,9 @@ func (h *HttpWorkerAdapter) Add( rw http.ResponseWriter, req *http.Request) {
 
 func (h *HttpWorkerAdapter) List(rw http.ResponseWriter, req *http.Request) {
 	childLogger.Debug().Msg("List")
+
+	span := lib.Span(req.Context(), "handler.List")
+	defer span.End()
 
 	vars := mux.Vars(req)
 	varID := vars["id"]
