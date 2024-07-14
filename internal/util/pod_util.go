@@ -47,7 +47,9 @@ func GetInfoPod() (	core.InfoPod,
 	} else {
 		infoPod.IsAZ = true
 	}
-
+	if os.Getenv("ENV") !=  "" {	
+		infoPod.Env = os.Getenv("ENV")
+	}
 	// Get IP
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {

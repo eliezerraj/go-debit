@@ -15,7 +15,8 @@ data:
   DB_SCHEMA: "public"
   DB_DRIVER: "postgres"
   SETPOD_AZ: "false"
-
+  ENV: "dev"
+  
   SERVICE_URL_DOMAIN: "https://vpce.global.dev.caradhras.io/pv"
   X_APIGW_API_ID: "129t4y8eoj"
 
