@@ -11,7 +11,6 @@ import (
 	"github.com/go-debit/internal/erro"
 	"github.com/go-debit/internal/lib"
 	"github.com/go-debit/internal/adapter/restapi"
-	"github.com/go-debit/internal/repository/postgre"
 	"github.com/go-debit/internal/repository/pg"
 	"github.com/sony/gobreaker"
 )
@@ -20,21 +19,18 @@ var childLogger = log.With().Str("service", "service").Logger()
 
 type WorkerService struct {
 	workerRepo		 		*pg.WorkerRepository
-	workerRepository 		*postgre.WorkerRepository
 	restEndpoint			*core.RestEndpoint
 	restApiService			*restapi.RestApiService
 	circuitBreaker			*gobreaker.CircuitBreaker
 }
 
-func NewWorkerService(	workerRepository 	*postgre.WorkerRepository,
-						workerRepo		 	*pg.WorkerRepository,
+func NewWorkerService(	workerRepo		 	*pg.WorkerRepository,
 						restEndpoint		*core.RestEndpoint,
 						restApiService		*restapi.RestApiService,
 						circuitBreaker		*gobreaker.CircuitBreaker) *WorkerService{
 	childLogger.Debug().Msg("NewWorkerService")
 
 	return &WorkerService{
-		workerRepository:	workerRepository,
 		workerRepo: 		workerRepo,
 		restEndpoint:		restEndpoint,
 		restApiService:		restApiService,
@@ -46,8 +42,7 @@ func (s WorkerService) SetSessionVariable(	ctx context.Context,
 											userCredential string) (bool, error){
 	childLogger.Debug().Msg("SetSessionVariable")
 
-	res, err := s.workerRepository.SetSessionVariable(	ctx, 
-														userCredential)
+	res, err := s.workerRepo.SetSessionVariable(ctx, userCredential)
 	if err != nil {
 		return false, err
 	}
