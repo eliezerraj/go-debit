@@ -12,12 +12,14 @@ import (
 	"github.com/go-debit/internal/lib"
 	"github.com/go-debit/internal/adapter/restapi"
 	"github.com/go-debit/internal/repository/postgre"
+	"github.com/go-debit/internal/repository/pg"
 	"github.com/sony/gobreaker"
 )
 
 var childLogger = log.With().Str("service", "service").Logger()
 
 type WorkerService struct {
+	workerRepo		 		*pg.WorkerRepository
 	workerRepository 		*postgre.WorkerRepository
 	restEndpoint			*core.RestEndpoint
 	restApiService			*restapi.RestApiService
@@ -25,6 +27,7 @@ type WorkerService struct {
 }
 
 func NewWorkerService(	workerRepository 	*postgre.WorkerRepository,
+						workerRepo		 	*pg.WorkerRepository,
 						restEndpoint		*core.RestEndpoint,
 						restApiService		*restapi.RestApiService,
 						circuitBreaker		*gobreaker.CircuitBreaker) *WorkerService{
@@ -32,6 +35,7 @@ func NewWorkerService(	workerRepository 	*postgre.WorkerRepository,
 
 	return &WorkerService{
 		workerRepository:	workerRepository,
+		workerRepo: 		workerRepo,
 		restEndpoint:		restEndpoint,
 		restApiService:		restApiService,
 		circuitBreaker: 	circuitBreaker,
@@ -51,23 +55,22 @@ func (s WorkerService) SetSessionVariable(	ctx context.Context,
 	return res, nil
 }
 
-func (s WorkerService) Add(	ctx context.Context, 
-							debit core.AccountStatement) (*core.AccountStatement, error){
+func (s WorkerService) Add(	ctx context.Context, debit core.AccountStatement) (*core.AccountStatement, error){
 	childLogger.Debug().Msg("--------------- Add ------------------------")
 	childLogger.Debug().Interface("1) debit :",debit).Msg("")
 
 	span := lib.Span(ctx, "service.Add")	
 
-	tx, err := s.workerRepository.StartTx(ctx)
+	tx, err := s.workerRepo.StartTx(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	defer func() {
 		if err != nil {
-			tx.Rollback()
+			tx.Rollback(ctx)
 		} else {
-			tx.Commit()
+			tx.Commit(ctx)
 		}
 		span.End()
 	}()
@@ -96,7 +99,7 @@ func (s WorkerService) Add(	ctx context.Context,
 
 	// Add the Data 
 	debit.FkAccountID = account_parsed.ID
-	res, err := s.workerRepository.Add(ctx, tx, debit)
+	res, err := s.workerRepo.Add(ctx, tx, debit)
 	if err != nil {
 		return nil, err
 	}
@@ -158,9 +161,7 @@ func (s WorkerService) Add(	ctx context.Context,
 			accountStatementFee.Amount	 = (debit.Amount * (fee_parsed.Value/100))
 			accountStatementFee.TenantID = debit.TenantID
 	
-			_, err = s.workerRepository.AddAccountStatementFee(	ctx, 
-																tx, 
-																accountStatementFee)
+			_, err = s.workerRepo.AddAccountStatementFee(ctx, tx, accountStatementFee)
 			if err != nil {
 				return nil, err
 			}
@@ -198,7 +199,7 @@ func (s WorkerService) List(ctx context.Context, debit core.AccountStatement) (*
 	debit.FkAccountID = account_parsed.ID
 	debit.Type = "DEBIT"
 
-	res, err := s.workerRepository.List(ctx, debit)
+	res, err := s.workerRepo.List(ctx, debit)
 	if err != nil {
 		return nil, err
 	}
