@@ -55,7 +55,6 @@ func main() {
 	var databasePG	pg.DatabasePG
 	var err error
 	for {
-		//break
 		databasePG, err = pg.NewDatabasePGServer(ctx, appServer.Database)
 		if err != nil {
 			if count < 3 {

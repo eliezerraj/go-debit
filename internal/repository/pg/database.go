@@ -160,7 +160,7 @@ func (w WorkerRepository) List(ctx context.Context, debit core.AccountStatement)
 	span := lib.Span(ctx, "repo.List")	
     defer span.End()
 
-	conn:= w.databasePG.GetConnection()
+	conn := w.databasePG.GetConnection()
 	
 	result_query := core.AccountStatement{}
 	balance_list := []core.AccountStatement{}
