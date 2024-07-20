@@ -19,6 +19,8 @@ var childLogger = log.With().Str("repository.pg", "WorkerRepo").Logger()
 
 type DatabasePG interface {
 	GetConnection() (*pgxpool.Pool)
+	Acquire(context.Context) (*pgxpool.Conn, error)
+	Release(*pgxpool.Conn)
 }
 
 type DatabasePGServer struct {
@@ -50,6 +52,21 @@ func NewDatabasePGServer(ctx context.Context, databaseRDS *core.DatabaseRDS) (Da
 	}, nil
 }
 
+func (d DatabasePGServer) Acquire(ctx context.Context) (*pgxpool.Conn, error) {
+	childLogger.Debug().Msg("Acquire")
+	connection, err := d.connPool.Acquire(ctx)
+	if err != nil {
+		childLogger.Error().Err(err).Msg("Error while acquiring connection from the database pool!!")
+		return nil, err
+	} 
+	return connection, nil
+}
+
+func (d DatabasePGServer) Release(connection *pgxpool.Conn) {
+	childLogger.Debug().Msg("Release")
+	defer connection.Release()
+}
+
 func (d DatabasePGServer) GetConnection() (*pgxpool.Pool) {
 	childLogger.Debug().Msg("GetConnection")
 	return d.connPool
@@ -60,6 +77,7 @@ func (d DatabasePGServer) CloseConnection() {
 	defer d.connPool.Close()
 }
 
+//-----------------------------------------------
 type WorkerRepository struct {
 	databasePG DatabasePG
 }
@@ -75,9 +93,14 @@ func (w WorkerRepository) SetSessionVariable(ctx context.Context, userCredential
 	childLogger.Debug().Msg("++++++++++++++++++++++++++++++++")
 	childLogger.Debug().Msg("SetSessionVariable")
 
-	connPool := w.databasePG.GetConnection()
+	conn, err := w.databasePG.Acquire(ctx)
+	if err != nil {
+		childLogger.Error().Err(err).Msg("Erro Acquire")
+		return false, errors.New(err.Error())
+	}
+	defer w.databasePG.Release(conn)
 	
-	_, err := connPool.Query(ctx, "SET sess.user_credential to '" + userCredential+ "'")
+	_, err = conn.Query(ctx, "SET sess.user_credential to '" + userCredential+ "'")
 	if err != nil {
 		childLogger.Error().Err(err).Msg("SET SESSION statement ERROR")
 		return false, errors.New(err.Error())
@@ -86,17 +109,22 @@ func (w WorkerRepository) SetSessionVariable(ctx context.Context, userCredential
 	return true, nil
 }
 
-func (w WorkerRepository) GetSessionVariable(ctx context.Context) (string, error) {
+func (w WorkerRepository) GetSessionVariable(ctx context.Context) (*string, error) {
 	childLogger.Debug().Msg("++++++++++++++++++++++++++++++++")
 	childLogger.Debug().Msg("GetSessionVariable")
 
-	connPool := w.databasePG.GetConnection()
+	conn, err := w.databasePG.Acquire(ctx)
+	if err != nil {
+		childLogger.Error().Err(err).Msg("Erro Acquire")
+		return nil, errors.New(err.Error())
+	}
+	defer w.databasePG.Release(conn)
 
 	var res_balance string
-	rows, err := connPool.Query(ctx, "SELECT current_setting('sess.user_credential')" )
+	rows, err := conn.Query(ctx, "SELECT current_setting('sess.user_credential')" )
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Prepare statement")
-		return "", errors.New(err.Error())
+		return nil, errors.New(err.Error())
 	}
 	defer rows.Close()
 
@@ -104,26 +132,37 @@ func (w WorkerRepository) GetSessionVariable(ctx context.Context) (string, error
 		err := rows.Scan( &res_balance )
 		if err != nil {
 			childLogger.Error().Err(err).Msg("Scan statement")
-			return "", errors.New(err.Error())
+			return nil, errors.New(err.Error())
         }
-		return res_balance, nil
+		return &res_balance, nil
 	}
 
-	return "", erro.ErrNotFound
+	return nil, erro.ErrNotFound
 }
 
-func (w WorkerRepository) StartTx(ctx context.Context) (pgx.Tx, error) {
+func (w WorkerRepository) StartTx(ctx context.Context) (pgx.Tx, *pgxpool.Conn,error) {
 	childLogger.Debug().Msg("StartTx")
 
-	conn := w.databasePG.GetConnection()
+	conn, err := w.databasePG.Acquire(ctx)
+	if err != nil {
+		childLogger.Error().Err(err).Msg("Erro Acquire")
+		return nil, nil, errors.New(err.Error())
+	}
+
 	tx, err := conn.Begin(ctx)
     if err != nil {
-        return nil, errors.New(err.Error())
+        return nil, nil ,errors.New(err.Error())
     }
 
-	return tx, nil
+	return tx, conn, nil
 }
 
+func (w WorkerRepository) ReleaseTx(connection *pgxpool.Conn) {
+	childLogger.Debug().Msg("ReleaseTx")
+
+	defer connection.Release()
+}
+//-----------------------------------------------
 func (w WorkerRepository) Add(ctx context.Context, tx pgx.Tx, debit core.AccountStatement) (*core.AccountStatement, error){
 	childLogger.Debug().Msg("Add")
 
@@ -160,7 +199,12 @@ func (w WorkerRepository) List(ctx context.Context, debit core.AccountStatement)
 	span := lib.Span(ctx, "repo.List")	
     defer span.End()
 
-	conn := w.databasePG.GetConnection()
+	conn, err := w.databasePG.Acquire(ctx)
+	if err != nil {
+		childLogger.Error().Err(err).Msg("Erro Acquire")
+		return nil, errors.New(err.Error())
+	}
+	defer w.databasePG.Release(conn)
 	
 	result_query := core.AccountStatement{}
 	balance_list := []core.AccountStatement{}

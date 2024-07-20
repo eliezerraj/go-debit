@@ -46,6 +46,7 @@ type RestEndpoint struct {
 	CaCert					*Cert `json:"ca_cert"`
 	ServiceUrlDomainPayFee	string `json:"service_url_domain_pay_fee"`
 	XApigwIdPayFee			string `json:"xApigwId_pay_fee"`
+	ServerHost				string `json:"server_host_localhost,omitempty"`
 }
 
 type Cert struct {
