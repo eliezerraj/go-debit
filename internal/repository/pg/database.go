@@ -169,6 +169,8 @@ func (w WorkerRepository) Add(ctx context.Context, tx pgx.Tx, debit core.Account
 	span := lib.Span(ctx, "repo.Add")	
     defer span.End()
 
+	debit.ChargeAt = time.Now()
+
 	query := `INSERT INTO account_statement (fk_account_id, 
 											type_charge,
 											charged_at, 
@@ -177,7 +179,7 @@ func (w WorkerRepository) Add(ctx context.Context, tx pgx.Tx, debit core.Account
 											tenant_id) 
 									VALUES($1, $2, $3, $4, $5, $6) RETURNING id`
 
-	row := tx.QueryRow(ctx, query, debit.FkAccountID, debit.Type, time.Now(), debit.Currency, debit.Amount, debit.TenantID)								
+	row := tx.QueryRow(ctx, query, debit.FkAccountID, debit.Type, debit.ChargeAt, debit.Currency, debit.Amount, debit.TenantID)								
 	
 	var id int
 
@@ -186,11 +188,9 @@ func (w WorkerRepository) Add(ctx context.Context, tx pgx.Tx, debit core.Account
 		return nil, errors.New(err.Error())
 	}
 
-	res_debit := core.AccountStatement{}
-	res_debit.ID = id
-	res_debit.ChargeAt = time.Now()
+	debit.ID = id 
 
-	return &res_debit , nil
+	return &debit , nil
 }
 
 func (w WorkerRepository) List(ctx context.Context, debit core.AccountStatement) (*[]core.AccountStatement, error){
