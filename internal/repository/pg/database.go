@@ -27,6 +27,43 @@ type DatabasePGServer struct {
 	connPool   	*pgxpool.Pool
 }
 
+func Config(database_url string) (*pgxpool.Config) {
+	const defaultMaxConns = int32(10)
+	const defaultMinConns = int32(0)
+	const defaultMaxConnLifetime = time.Hour
+	const defaultMaxConnIdleTime = time.Minute * 30
+	const defaultHealthCheckPeriod = time.Minute
+	const defaultConnectTimeout = time.Second * 5
+   
+	dbConfig, err := pgxpool.ParseConfig(database_url)
+	if err!=nil {
+		childLogger.Error().Err(err).Msg("Failed to create a config")
+	}
+   
+	dbConfig.MaxConns = defaultMaxConns
+	dbConfig.MinConns = defaultMinConns
+	dbConfig.MaxConnLifetime = defaultMaxConnLifetime
+	dbConfig.MaxConnIdleTime = defaultMaxConnIdleTime
+	dbConfig.HealthCheckPeriod = defaultHealthCheckPeriod
+	dbConfig.ConnConfig.ConnectTimeout = defaultConnectTimeout
+   
+	dbConfig.BeforeAcquire = func(ctx context.Context, c *pgx.Conn) bool {
+		childLogger.Debug().Msg("Before acquiring connection pool !")
+	 	return true
+	}
+   
+	dbConfig.AfterRelease = func(c *pgx.Conn) bool {
+		childLogger.Debug().Msg("After releasing connection pool !")
+	 	return true
+	}
+   
+	dbConfig.BeforeClose = func(c *pgx.Conn) {
+		childLogger.Debug().Msg("Closed connection pool !")
+	}
+   
+	return dbConfig
+}
+
 func NewDatabasePGServer(ctx context.Context, databaseRDS *core.DatabaseRDS) (DatabasePG, error) {
 	childLogger.Debug().Msg("NewDatabasePGServer")
 	
@@ -37,7 +74,7 @@ func NewDatabasePGServer(ctx context.Context, databaseRDS *core.DatabaseRDS) (Da
 							databaseRDS.Port, 
 							databaseRDS.DatabaseName) 
 							
-	connPool, err := pgxpool.New(ctx, connStr)
+	connPool, err := pgxpool.NewWithConfig(ctx, Config(connStr))
 	if err != nil {
 		return DatabasePGServer{}, err
 	}
