@@ -29,7 +29,7 @@ type DatabasePGServer struct {
 
 func Config(database_url string) (*pgxpool.Config) {
 	const defaultMaxConns = int32(10)
-	const defaultMinConns = int32(0)
+	const defaultMinConns = int32(5)
 	const defaultMaxConnLifetime = time.Hour
 	const defaultMaxConnIdleTime = time.Minute * 30
 	const defaultHealthCheckPeriod = time.Minute
@@ -91,6 +91,10 @@ func NewDatabasePGServer(ctx context.Context, databaseRDS *core.DatabaseRDS) (Da
 
 func (d DatabasePGServer) Acquire(ctx context.Context) (*pgxpool.Conn, error) {
 	childLogger.Debug().Msg("Acquire")
+	
+	span := lib.Span(ctx, "repo.Acquire")
+	defer span.End()
+
 	connection, err := d.connPool.Acquire(ctx)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Error while acquiring connection from the database pool!!")
