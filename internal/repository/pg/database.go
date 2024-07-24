@@ -92,9 +92,6 @@ func NewDatabasePGServer(ctx context.Context, databaseRDS *core.DatabaseRDS) (Da
 func (d DatabasePGServer) Acquire(ctx context.Context) (*pgxpool.Conn, error) {
 	childLogger.Debug().Msg("Acquire")
 	
-	span := lib.Span(ctx, "repo.Acquire")
-	defer span.End()
-
 	connection, err := d.connPool.Acquire(ctx)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Error while acquiring connection from the database pool!!")
@@ -184,11 +181,16 @@ func (w WorkerRepository) GetSessionVariable(ctx context.Context) (*string, erro
 func (w WorkerRepository) StartTx(ctx context.Context) (pgx.Tx, *pgxpool.Conn,error) {
 	childLogger.Debug().Msg("StartTx")
 
+	span := lib.Span(ctx, "repo.StartTx")
+	defer span.End()
+
+	span = lib.Span(ctx, "repo.Acquire")
 	conn, err := w.databasePG.Acquire(ctx)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Erro Acquire")
 		return nil, nil, errors.New(err.Error())
 	}
+	span.End()
 
 	tx, err := conn.Begin(ctx)
     if err != nil {
@@ -240,11 +242,13 @@ func (w WorkerRepository) List(ctx context.Context, debit core.AccountStatement)
 	span := lib.Span(ctx, "repo.List")	
     defer span.End()
 
+	span = lib.Span(ctx, "repo.Acquire")
 	conn, err := w.databasePG.Acquire(ctx)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Erro Acquire")
 		return nil, errors.New(err.Error())
 	}
+	span.End()
 	defer w.databasePG.Release(conn)
 	
 	result_query := core.AccountStatement{}
