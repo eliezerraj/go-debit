@@ -11,27 +11,19 @@ import (
 	"context"
 
 	"github.com/gorilla/mux"
-
-	"github.com/go-debit/internal/service"
+	"github.com/rs/zerolog/log"
 	"github.com/go-debit/internal/core"
 	"github.com/go-debit/internal/lib"
+	"github.com/go-debit/internal/handler/utils/middleware"
+	"github.com/go-debit/internal/handler/controller"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/contrib/propagators/aws/xray"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 )
-//--------------------------------------------------------
-type HttpWorkerAdapter struct {
-	workerService 	*service.WorkerService
-}
 
-func NewHttpWorkerAdapter(workerService *service.WorkerService) HttpWorkerAdapter {
-	childLogger.Debug().Msg("NewHttpWorkerAdapter")
+var childLogger = log.With().Str("handler", "handler").Logger()
 
-	return HttpWorkerAdapter{
-		workerService: workerService,
-	}
-}
 //--------------------------------------------------------
 type HttpServer struct {
 	httpServer	*core.Server
@@ -40,13 +32,14 @@ type HttpServer struct {
 func NewHttpAppServer(httpServer *core.Server) HttpServer {
 	childLogger.Debug().Msg("NewHttpAppServer")
 
-	return HttpServer{httpServer: httpServer }
+	return HttpServer{httpServer: httpServer}
 }
 //--------------------------------------------------------
-func (h HttpServer) StartHttpAppServer(ctx context.Context, 
-										httpWorkerAdapter *HttpWorkerAdapter,
+func (h HttpServer) StartHttpAppServer(	ctx context.Context, 
+										httpWorkerAdapter *controller.HttpWorkerAdapter,
 										appServer *core.AppServer) {
 	childLogger.Info().Msg("StartHttpAppServer")
+	
 	// ---------------------- OTEL ---------------
 	childLogger.Info().Str("OTEL_EXPORTER_OTLP_ENDPOINT :", appServer.ConfigOTEL.OtelExportEndpoint).Msg("")
 	
@@ -59,9 +52,10 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context,
 	}()
 	otel.SetTextMapPropagator(xray.Propagator{})
 	otel.SetTracerProvider(tp)
+	// ---------------------- OTEL ---------------
 
 	myRouter := mux.NewRouter().StrictSlash(true)
-	myRouter.Use(MiddleWareHandlerHeader)
+	myRouter.Use(middleware.MiddleWareHandlerHeader)
 
 	myRouter.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
 		childLogger.Debug().Msg("/")
@@ -84,15 +78,12 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context,
     header.HandleFunc("/header", httpWorkerAdapter.Header)
 
 	addDebit := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
-	addDebit.Handle("/add", 
-						http.HandlerFunc(httpWorkerAdapter.Add),)
+	addDebit.Handle("/add", http.HandlerFunc(httpWorkerAdapter.Add))
 	addDebit.Use(httpWorkerAdapter.DecoratorDB)
 	addDebit.Use(otelmux.Middleware("go-debit"))
 
 	listDebit := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
-	listDebit.Handle("/list/{id}", 
-						http.HandlerFunc(httpWorkerAdapter.List),)
-	listDebit.Use(MiddleWareHandlerHeader)
+	listDebit.Handle("/list/{id}", 	http.HandlerFunc(httpWorkerAdapter.List))
 	listDebit.Use(otelmux.Middleware("go-debit"))
 
 	srv := http.Server{

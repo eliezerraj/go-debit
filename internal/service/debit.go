@@ -11,23 +11,23 @@ import (
 	"github.com/go-debit/internal/erro"
 	"github.com/go-debit/internal/lib"
 	"github.com/go-debit/internal/adapter/restapi"
-	"github.com/go-debit/internal/repository/pg"
+	"github.com/go-debit/internal/repository/storage"
 	"github.com/sony/gobreaker"
 )
 
 var childLogger = log.With().Str("service", "service").Logger()
 
 type WorkerService struct {
-	workerRepo		 		*pg.WorkerRepository
-	appServer				*core.AppServer
-	restApiService			*restapi.RestApiService
-	circuitBreaker			*gobreaker.CircuitBreaker
+	workerRepo	*storage.WorkerRepository
+	appServer	*core.AppServer
+	restApiService	*restapi.RestApiService
+	circuitBreaker	*gobreaker.CircuitBreaker
 }
 
-func NewWorkerService(	workerRepo		 	*pg.WorkerRepository,
-						appServer		*core.AppServer,
-						restApiService		*restapi.RestApiService,
-						circuitBreaker		*gobreaker.CircuitBreaker) *WorkerService{
+func NewWorkerService(	workerRepo	*storage.WorkerRepository,
+						appServer	*core.AppServer,
+						restApiService	*restapi.RestApiService,
+						circuitBreaker	*gobreaker.CircuitBreaker) *WorkerService{
 	childLogger.Debug().Msg("NewWorkerService")
 
 	return &WorkerService{
@@ -50,7 +50,7 @@ func (s WorkerService) SetSessionVariable(	ctx context.Context,
 	return res, nil
 }
 
-func (s WorkerService) Add(	ctx context.Context, debit core.AccountStatement) (*core.AccountStatement, error){
+func (s WorkerService) Add(	ctx context.Context, debit *core.AccountStatement) (*core.AccountStatement, error){
 	childLogger.Debug().Msg("--------------- Add ------------------------")
 	childLogger.Debug().Interface("1) debit :",debit).Msg("")
 
@@ -154,7 +154,7 @@ func (s WorkerService) Add(	ctx context.Context, debit core.AccountStatement) (*
 			accountStatementFee.Amount	 = (debit.Amount * (fee_parsed.Value/100))
 			accountStatementFee.TenantID = debit.TenantID
 	
-			_, err = s.workerRepo.AddAccountStatementFee(ctx, tx, accountStatementFee)
+			_, err = s.workerRepo.AddAccountStatementFee(ctx, tx, &accountStatementFee)
 			if err != nil {
 				return nil, err
 			}
@@ -167,10 +167,10 @@ func (s WorkerService) Add(	ctx context.Context, debit core.AccountStatement) (*
 		childLogger.Debug().Msg("--------------------------------------------------")
 	}
 
-	return &debit, nil
+	return debit, nil
 }
 
-func (s WorkerService) List(ctx context.Context, debit core.AccountStatement) (*[]core.AccountStatement, error){
+func (s WorkerService) List(ctx context.Context, debit *core.AccountStatement) (*[]core.AccountStatement, error){
 	childLogger.Debug().Msg("List")
 
 	span := lib.Span(ctx, "service.List")	

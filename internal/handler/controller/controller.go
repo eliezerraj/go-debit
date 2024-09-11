@@ -1,43 +1,42 @@
-package handler
+package controller
 
 import (	
+	//"fmt"
 	"net/http"
 	"encoding/json"
 	"github.com/rs/zerolog/log"
 	"github.com/gorilla/mux"
 
+	"github.com/go-debit/internal/service"
 	"github.com/go-debit/internal/core"
 	"github.com/go-debit/internal/erro"
 	"github.com/go-debit/internal/lib"
 )
 
-var childLogger = log.With().Str("handler", "handler").Logger()
+var childLogger = log.With().Str("handler", "controller").Logger()
 
-// Middleware v01
-func MiddleWareHandlerHeader(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		childLogger.Debug().Msg("-------------- MiddleWareHandlerHeader (INICIO)  --------------")
-	
-		/*if reqHeadersBytes, err := json.Marshal(r.Header); err != nil {
-			childLogger.Error().Err(err).Msg("Could not Marshal http headers !!!")
-		} else {
-			childLogger.Debug().Str("Headers : ", string(reqHeadersBytes) ).Msg("")
-		}
+type HttpWorkerAdapter struct {
+	workerService 	*service.WorkerService
+}
 
-		childLogger.Debug().Str("Method : ", r.Method ).Msg("")
-		childLogger.Debug().Str("URL : ", r.URL.Path ).Msg("")*/
+func NewHttpWorkerAdapter(workerService *service.WorkerService) HttpWorkerAdapter {
+	childLogger.Debug().Msg("NewHttpWorkerAdapter")
 
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Headers","Content-Type,access-control-allow-origin, access-control-allow-headers")
-		//log.Println(r.Header.Get("Host"))
-		//log.Println(r.Header.Get("User-Agent"))
-		//log.Println(r.Header.Get("X-Forwarded-For"))
+	return HttpWorkerAdapter{
+		workerService: workerService,
+	}
+}
 
-		childLogger.Debug().Msg("-------------- MiddleWareHandlerHeader (FIM) ----------------")
+type APIError struct {
+	StatusCode	int  `json:"statusCode"`
+	Msg			any `json:"msg"`
+}
 
-		next.ServeHTTP(w, r)
-	})
+func NewAPIError(statusCode int, err error) APIError {
+	return APIError{
+		StatusCode: statusCode,
+		Msg:		err.Error(),
+	}
 }
 
 // Middleware v02 - with decoratorDB
@@ -104,23 +103,25 @@ func (h *HttpWorkerAdapter) Add( rw http.ResponseWriter, req *http.Request) {
 	debit := core.AccountStatement{}
 	err := json.NewDecoder(req.Body).Decode(&debit)
     if err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(rw).Encode(erro.ErrUnmarshal.Error())
-        return
+		apiError := NewAPIError(500, erro.ErrUnmarshal)
+		rw.WriteHeader(apiError.StatusCode)
+		json.NewEncoder(rw).Encode(apiError)
+		return
     }
+	defer req.Body.Close()
 
-	res, err := h.workerService.Add(req.Context(), debit)
+	res, err := h.workerService.Add(req.Context(), &debit)
 	if err != nil {
+		var apiError APIError
 		switch err {
-			case erro.ErrNotFound:
-				rw.WriteHeader(404)
-				json.NewEncoder(rw).Encode(err.Error())
-				return
-			default:
-				rw.WriteHeader(409)
-				json.NewEncoder(rw).Encode(err.Error())
-				return
+		case erro.ErrNotFound:
+			apiError = NewAPIError(404, err)
+		default:
+			apiError = NewAPIError(409, err)
 		}
+		rw.WriteHeader(apiError.StatusCode)
+		json.NewEncoder(rw).Encode(apiError)
+		return
 	}
 
 	json.NewEncoder(rw).Encode(res)
@@ -139,14 +140,18 @@ func (h *HttpWorkerAdapter) List(rw http.ResponseWriter, req *http.Request) {
 	debit := core.AccountStatement{}
 	debit.AccountID = varID
 	
-	res, err := h.workerService.List(req.Context(), debit)
+	res, err := h.workerService.List(req.Context(), &debit)
 	if err != nil {
+		var apiError APIError
 		switch err {
+		case erro.ErrNotFound:
+			apiError = NewAPIError(404, err)
 		default:
-			rw.WriteHeader(500)
-			json.NewEncoder(rw).Encode(err.Error())
-			return
+			apiError = NewAPIError(500, err)
 		}
+		rw.WriteHeader(apiError.StatusCode)
+		json.NewEncoder(rw).Encode(apiError)
+		return
 	}
 
 	json.NewEncoder(rw).Encode(res)
