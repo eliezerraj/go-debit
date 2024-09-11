@@ -4,11 +4,7 @@ import (
 	"context"
 	"fmt"
 	"time"
-	//"errors"
-
 	"github.com/go-debit/internal/core"
-	//"github.com/go-debit/internal/lib"
-	//"github.com/go-debit/internal/erro"
 
 	"github.com/rs/zerolog/log"
 	"github.com/jackc/pgx/v5"
