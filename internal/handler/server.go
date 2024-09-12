@@ -22,7 +22,7 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 )
 
-var childLogger = log.With().Str("handler", "handler").Logger()
+var childLogger = log.With().Str("handler", "server").Logger()
 
 //--------------------------------------------------------
 type HttpServer struct {

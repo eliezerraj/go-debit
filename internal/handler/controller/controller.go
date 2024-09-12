@@ -102,7 +102,7 @@ func (h *HttpWorkerAdapter) Add( rw http.ResponseWriter, req *http.Request) {
 	debit := core.AccountStatement{}
 	err := json.NewDecoder(req.Body).Decode(&debit)
     if err != nil {
-		apiError := NewAPIError(500, erro.ErrUnmarshal)
+		apiError := NewAPIError(400, erro.ErrUnmarshal)
 		rw.WriteHeader(apiError.StatusCode)
 		json.NewEncoder(rw).Encode(apiError)
 		return
