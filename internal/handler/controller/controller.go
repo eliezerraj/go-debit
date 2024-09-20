@@ -38,38 +38,6 @@ func NewAPIError(statusCode int, err error) APIError {
 	}
 }
 
-// Middleware v02 - with decoratorDB
-func (h *HttpWorkerAdapter) DecoratorDB(next http.Handler) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		childLogger.Debug().Msg("-------------- Decorator - MiddleWareHandlerHeader (INICIO) --------------")
-	
-		/*if reqHeadersBytes, err := json.Marshal(r.Header); err != nil {
-			childLogger.Error().Err(err).Msg("Could not Marshal http headers !!!")
-		} else {
-			childLogger.Debug().Str("Headers : ", string(reqHeadersBytes) ).Msg("")
-		}
-
-		childLogger.Debug().Str("Method : ", r.Method ).Msg("")
-		childLogger.Debug().Str("URL : ", r.URL.Path ).Msg("")*/
-
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Headers","Content-Type,access-control-allow-origin, access-control-allow-headers")
-	
-		// If the user was informed then insert it in the session
-		if string(r.Header.Get("client-id")) != "" {
-			h.workerService.SetSessionVariable(r.Context(),string(r.Header.Get("client-id")))
-		} else {
-			h.workerService.SetSessionVariable(r.Context(),"NO_INFORMED")
-		}
-
-		childLogger.Debug().Msg("-------------- Decorator- MiddleWareHandlerHeader (FIM) ----------------")
-
-		next.ServeHTTP(w, r)
-	})
-}
-
 func (h *HttpWorkerAdapter) Health(rw http.ResponseWriter, req *http.Request) {
 	childLogger.Debug().Msg("Health")
 

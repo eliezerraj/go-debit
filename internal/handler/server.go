@@ -79,7 +79,6 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 
 	addDebit := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
 	addDebit.Handle("/add", http.HandlerFunc(httpWorkerAdapter.Add))
-	addDebit.Use(httpWorkerAdapter.DecoratorDB)
 	addDebit.Use(otelmux.Middleware("go-debit"))
 
 	listDebit := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
