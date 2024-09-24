@@ -14,7 +14,7 @@ func GetCaCertEnv() core.Cert {
 
 	err := godotenv.Load(".env")
 	if err != nil {
-		childLogger.Info().Err(err).Msg("No .env File !!!!")
+		childLogger.Info().Err(err).Msg("env file not found !!!")
 	}
 
 	var cert		core.Cert
@@ -27,7 +27,7 @@ func GetCaCertEnv() core.Cert {
 	if (cert.IsTLS) {
 		caPEM, err = ioutil.ReadFile("/var/pod/cert/ca.crt")
 		if err != nil {
-			childLogger.Info().Err(err).Msg("Cert caPEM nao encontrado")
+			childLogger.Info().Err(err).Msg("cert caPEM not found")
 		} else {
 			cert.CaPEM, err = base64.StdEncoding.DecodeString(string(caPEM))
 			if err != nil {

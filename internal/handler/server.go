@@ -78,11 +78,11 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
     header.HandleFunc("/header", httpWorkerAdapter.Header)
 
 	addDebit := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
-	addDebit.Handle("/add", http.HandlerFunc(httpWorkerAdapter.Add))
+	addDebit.HandleFunc("/add", middleware.MiddleWareErrorHandler(httpWorkerAdapter.Add))
 	addDebit.Use(otelmux.Middleware("go-debit"))
 
 	listDebit := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
-	listDebit.Handle("/list/{id}", 	http.HandlerFunc(httpWorkerAdapter.List))
+	listDebit.HandleFunc("/list/{id}", 	middleware.MiddleWareErrorHandler(httpWorkerAdapter.List))
 	listDebit.Use(otelmux.Middleware("go-debit"))
 
 	srv := http.Server{
@@ -98,7 +98,7 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 	go func() {
 		err := srv.ListenAndServe()
 		if err != nil {
-			childLogger.Error().Err(err).Msg("Cancel http mux server !!!")
+			childLogger.Error().Err(err).Msg("cancel http mux server !!!")
 		}
 	}()
 
@@ -107,8 +107,8 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 	<-ch
 
 	if err := srv.Shutdown(ctx); err != nil && err != http.ErrServerClosed {
-		childLogger.Error().Err(err).Msg("WARNING Dirty Shutdown !!!")
+		childLogger.Error().Err(err).Msg("warning dirty shutdown !!!")
 		return
 	}
-	childLogger.Info().Msg("Stop Done !!!!")
+	childLogger.Info().Msg("stop done !!!")
 }

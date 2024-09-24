@@ -24,7 +24,7 @@ func GetInfoPod() (	core.InfoPod,
 
 	err := godotenv.Load(".env")
 	if err != nil {
-		childLogger.Info().Err(err).Msg("No .env File !!!!")
+		childLogger.Info().Err(err).Msg("env file not found !!!")
 	}
 
 	var infoPod 	core.InfoPod
@@ -53,7 +53,7 @@ func GetInfoPod() (	core.InfoPod,
 	// Get IP
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
-		log.Error().Err(err).Msg("Error to get the POD IP address !!!")
+		log.Error().Err(err).Msg("error to get the pod ip address !!!")
 		os.Exit(3)
 	}
 	for _, a := range addrs {
@@ -66,16 +66,16 @@ func GetInfoPod() (	core.InfoPod,
 	infoPod.OSPID = strconv.Itoa(os.Getpid())
 
 	// Get AZ only if localtest is true
-	if (infoPod.IsAZ == true) {
+	if (infoPod.IsAZ) {
 		cfg, err := config.LoadDefaultConfig(context.TODO())
 		if err != nil {
-			childLogger.Error().Err(err).Msg("ERRO FATAL get Context !!!")
+			childLogger.Error().Err(err).Msg("error fatal get context !!!")
 			os.Exit(3)
 		}
 		client := imds.NewFromConfig(cfg)
 		response, err := client.GetInstanceIdentityDocument(context.TODO(), &imds.GetInstanceIdentityDocumentInput{})
 		if err != nil {
-			childLogger.Error().Err(err).Msg("Unable to retrieve the region from the EC2 instance !!!")
+			childLogger.Error().Err(err).Msg("unable to retrieve the region from the EC2 instance !!!")
 			os.Exit(3)
 		}
 		infoPod.AvailabilityZone = response.AvailabilityZone	

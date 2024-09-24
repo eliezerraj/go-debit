@@ -28,7 +28,11 @@ func NewHttpWorkerAdapter(workerService *service.WorkerService) HttpWorkerAdapte
 
 type APIError struct {
 	StatusCode	int  `json:"statusCode"`
-	Msg			any `json:"msg"`
+	Msg			string `json:"msg"`
+}
+
+func (e APIError) Error() string {
+	return e.Msg
 }
 
 func NewAPIError(statusCode int, err error) APIError {
@@ -43,7 +47,6 @@ func (h *HttpWorkerAdapter) Health(rw http.ResponseWriter, req *http.Request) {
 
 	health := true
 	json.NewEncoder(rw).Encode(health)
-	return
 }
 
 func (h *HttpWorkerAdapter) Live(rw http.ResponseWriter, req *http.Request) {
@@ -51,17 +54,15 @@ func (h *HttpWorkerAdapter) Live(rw http.ResponseWriter, req *http.Request) {
 
 	live := true
 	json.NewEncoder(rw).Encode(live)
-	return
 }
 
 func (h *HttpWorkerAdapter) Header(rw http.ResponseWriter, req *http.Request) {
 	childLogger.Debug().Msg("Header")
 	
 	json.NewEncoder(rw).Encode(req.Header)
-	return
 }
 
-func (h *HttpWorkerAdapter) Add( rw http.ResponseWriter, req *http.Request) {
+func (h *HttpWorkerAdapter) Add( rw http.ResponseWriter, req *http.Request) error {
 	childLogger.Debug().Msg("Add")
 
 	span := lib.Span(req.Context(), "handler.Add")
@@ -70,11 +71,10 @@ func (h *HttpWorkerAdapter) Add( rw http.ResponseWriter, req *http.Request) {
 	debit := core.AccountStatement{}
 	err := json.NewDecoder(req.Body).Decode(&debit)
     if err != nil {
-		apiError := NewAPIError(400, erro.ErrUnmarshal)
-		rw.WriteHeader(apiError.StatusCode)
-		json.NewEncoder(rw).Encode(apiError)
-		return
+		apiError := NewAPIError(http.StatusBadRequest, erro.ErrUnmarshal)
+		return apiError
     }
+
 	defer req.Body.Close()
 
 	res, err := h.workerService.Add(req.Context(), &debit)
@@ -82,20 +82,17 @@ func (h *HttpWorkerAdapter) Add( rw http.ResponseWriter, req *http.Request) {
 		var apiError APIError
 		switch err {
 		case erro.ErrNotFound:
-			apiError = NewAPIError(404, err)
+			apiError = NewAPIError(http.StatusNotFound, err)
 		default:
-			apiError = NewAPIError(409, err)
+			apiError = NewAPIError(http.StatusInternalServerError, err)
 		}
-		rw.WriteHeader(apiError.StatusCode)
-		json.NewEncoder(rw).Encode(apiError)
-		return
+		return apiError
 	}
 
-	json.NewEncoder(rw).Encode(res)
-	return
+	return WriteJSON(rw, http.StatusOK, res)
 }
 
-func (h *HttpWorkerAdapter) List(rw http.ResponseWriter, req *http.Request) {
+func (h *HttpWorkerAdapter) List(rw http.ResponseWriter, req *http.Request) error {
 	childLogger.Debug().Msg("List")
 
 	span := lib.Span(req.Context(), "handler.List")
@@ -112,15 +109,17 @@ func (h *HttpWorkerAdapter) List(rw http.ResponseWriter, req *http.Request) {
 		var apiError APIError
 		switch err {
 		case erro.ErrNotFound:
-			apiError = NewAPIError(404, err)
+			apiError = NewAPIError(http.StatusNotFound, err)
 		default:
-			apiError = NewAPIError(500, err)
+			apiError = NewAPIError(http.StatusInternalServerError, err)
 		}
-		rw.WriteHeader(apiError.StatusCode)
-		json.NewEncoder(rw).Encode(apiError)
-		return
+		return apiError
 	}
 
-	json.NewEncoder(rw).Encode(res)
-	return
+	return WriteJSON(rw, http.StatusOK, res)
+}
+
+func WriteJSON(rw http.ResponseWriter, code int, v any) error{
+	rw.WriteHeader(code)
+	return json.NewEncoder(rw).Encode(v)
 }

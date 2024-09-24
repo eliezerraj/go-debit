@@ -2,7 +2,6 @@ package util
 
 import(
 	"os"
-	"io/ioutil"
 
 	"github.com/joho/godotenv"
 	"github.com/go-debit/internal/core"
@@ -13,7 +12,7 @@ func GetDatabaseEnv() core.DatabaseRDS {
 
 	err := godotenv.Load(".env")
 	if err != nil {
-		childLogger.Info().Err(err).Msg("No .env File !!!!")
+		childLogger.Info().Err(err).Msg("env file not found !!!")
 	}
 	
 	var databaseRDS	core.DatabaseRDS
@@ -36,14 +35,14 @@ func GetDatabaseEnv() core.DatabaseRDS {
 	}
 
 	// Get Database Secrets
-	file_user, err := ioutil.ReadFile("/var/pod/secret/username")
+	file_user, err := os.ReadFile("/var/pod/secret/username")
 	if err != nil {
-		childLogger.Error().Err(err).Msg("Fatal erro get /var/pod/secret/username")
+		childLogger.Error().Err(err).Msg("fatal erro get /var/pod/secret/username")
 		os.Exit(3)
 	}
-	file_pass, err := ioutil.ReadFile("/var/pod/secret/password")
+	file_pass, err := os.ReadFile("/var/pod/secret/password")
 	if err != nil {
-		childLogger.Error().Err(err).Msg("Fatal erro get /var/pod/secret/password")
+		childLogger.Error().Err(err).Msg("fatal erro get /var/pod/secret/password")
 		os.Exit(3)
 	}
 	

@@ -60,9 +60,9 @@ func Server() {
 		databasePG, err = pg.NewDatabasePGServer(ctx, appServer.Database)
 		if err != nil {
 			if count < 3 {
-				log.Error().Err(err).Msg("Erro open Database... trying again !!")
+				log.Error().Err(err).Msg("erro open Database... trying again !!")
 			} else {
-				log.Error().Err(err).Msg("Fatal erro open Database aborting")
+				log.Error().Err(err).Msg("fatal erro open Database aborting")
 				panic(err)
 			}
 			time.Sleep(3 * time.Second)
