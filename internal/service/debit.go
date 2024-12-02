@@ -5,8 +5,8 @@ import (
 	"context"
 	"errors"
 	"github.com/rs/zerolog/log"
+	"encoding/json"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/go-debit/internal/core"
 	"github.com/go-debit/internal/erro"
 	"github.com/go-debit/internal/lib"
@@ -16,6 +16,7 @@ import (
 )
 
 var childLogger = log.With().Str("service", "service").Logger()
+var restApiCallData core.RestApiCallData
 
 type WorkerService struct {
 	workerRepo	*storage.WorkerRepository
@@ -43,7 +44,6 @@ func (s WorkerService) Add(	ctx context.Context, debit *core.AccountStatement) (
 	childLogger.Debug().Interface("1) debit :",debit).Msg("")
 
 	span := lib.Span(ctx, "service.Add")	
-
 	tx, conn, err := s.workerRepo.StartTx(ctx)
 	if err != nil {
 		return nil, err
@@ -66,18 +66,22 @@ func (s WorkerService) Add(	ctx context.Context, debit *core.AccountStatement) (
 	}
 
 	// Get account data
-	path := s.appServer.RestEndpoint.ServiceUrlDomain + "/get/" + debit.AccountID
-	rest_interface_data, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil)
+	restApiCallData.Method = "GET"
+	restApiCallData.Url = s.appServer.RestEndpoint.ServiceUrlDomain + "/get/" + debit.AccountID
+	restApiCallData.X_Api_Id = &s.appServer.RestEndpoint.XApigwId
+
+	rest_interface_acc_from, err := s.restApiService.CallApiRest(ctx, restApiCallData, nil)
 	if err != nil {
+		childLogger.Error().Err(err).Msg("error CallApiRest /fundBalanceAccount")
 		return nil, err
 	}
-
-	var account_parsed core.Account
-	err = mapstructure.Decode(rest_interface_data, &account_parsed)
-    if err != nil {
-		childLogger.Error().Err(err).Msg("error parse interface")
+	jsonString, err  := json.Marshal(rest_interface_acc_from)
+	if err != nil {
+		childLogger.Error().Err(err).Msg("error Marshal")
 		return nil, errors.New(err.Error())
     }
+	var account_parsed core.Account
+	json.Unmarshal(jsonString, &account_parsed)
 
 	childLogger.Debug().Interface("account_parsed:",account_parsed).Msg("")
 
@@ -91,26 +95,36 @@ func (s WorkerService) Add(	ctx context.Context, debit *core.AccountStatement) (
 	debit.ID = res.ID
 	debit.ChargeAt = res.ChargeAt
 
-	path = s.appServer.RestEndpoint.ServiceUrlDomain + "/add/fund"
-	_, err = s.restApiService.CallRestApi(ctx,"POST",path, &s.appServer.RestEndpoint.XApigwId ,debit)
+	restApiCallData.Method = "POST"
+	restApiCallData.Url = s.appServer.RestEndpoint.ServiceUrlDomain + "/add/fund"
+	restApiCallData.X_Api_Id = &s.appServer.RestEndpoint.XApigwId
+
+	_, err = s.restApiService.CallApiRest(ctx, restApiCallData, debit)
 	if err != nil {
-		return nil, err
-	}
-	
-	// Get financial script
-	script := "script.debit"
-	path = s.appServer.RestEndpoint.ServiceUrlDomainPayFee + "/script/get/" + script
-	res_script, err := s.restApiService.CallRestApi(ctx, "GET", path, &s.appServer.RestEndpoint.XApigwIdPayFee, nil)
-	if err != nil {
+		childLogger.Error().Err(err).Msg("error CallApiRest/add/fund")
 		return nil, err
 	}
 
-	var script_parsed core.Script
-	err = mapstructure.Decode(res_script, &script_parsed)
-    if err != nil {
-		childLogger.Error().Err(err).Msg("error parse interface")
+	// Get financial script
+	script := "script.debit"
+
+	restApiCallData.Method = "GET"
+	restApiCallData.Url = s.appServer.RestEndpoint.ServiceUrlDomainPayFee + "/script/get/" + script
+	restApiCallData.X_Api_Id = &s.appServer.RestEndpoint.XApigwIdPayFee
+
+	res_script, err := s.restApiService.CallApiRest(ctx, restApiCallData, nil)
+	if err != nil {
+		childLogger.Error().Err(err).Msg("error CallApiRest /key/get/")
+		return nil, err
+	}
+	
+	jsonString, err = json.Marshal(res_script)
+	if err != nil {
+		childLogger.Error().Err(err).Msg("error Marshal")
 		return nil, errors.New(err.Error())
-    }
+	}
+	var script_parsed core.Script
+	json.Unmarshal(jsonString, &script_parsed)
 
 	childLogger.Debug().Interface("script_parsed:",script_parsed).Msg("")
 
@@ -119,20 +133,26 @@ func (s WorkerService) Add(	ctx context.Context, debit *core.AccountStatement) (
 		for _, v := range script_parsed.Fee {
 			childLogger.Debug().Interface("v:",v).Msg("")
 	
-			path = s.appServer.RestEndpoint.ServiceUrlDomainPayFee + "/key/get/" + v
-			res_fee, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwIdPayFee, nil)
+			restApiCallData.Method = "GET"
+			restApiCallData.Url = s.appServer.RestEndpoint.ServiceUrlDomainPayFee + "/key/get/" + v
+			restApiCallData.X_Api_Id = &s.appServer.RestEndpoint.XApigwIdPayFee
+		
+			res_fee, err := s.restApiService.CallApiRest(ctx, restApiCallData, nil)
 			if err != nil {
+				childLogger.Error().Err(err).Msg("error CallApiRest /key/get/")
 				return nil, err
 			}
+			
 			childLogger.Debug().Interface("res_fee:",res_fee).Msg("")
-	
-			var fee_parsed core.Fee
-			err = mapstructure.Decode(res_fee, &fee_parsed)
+
+			jsonString, err  := json.Marshal(res_fee)
 			if err != nil {
-				childLogger.Error().Err(err).Msg("error parse interface")
+				childLogger.Error().Err(err).Msg("error Marshal")
 				return nil, errors.New(err.Error())
 			}
-	
+			var fee_parsed core.Fee
+			json.Unmarshal(jsonString, &fee_parsed)
+
 			accountStatementFee := core.AccountStatementFee{}
 			accountStatementFee.FkAccountStatementID = res.ID
 			accountStatementFee.TypeFee = fee_parsed.Name
@@ -164,18 +184,22 @@ func (s WorkerService) List(ctx context.Context, debit *core.AccountStatement) (
 	span := lib.Span(ctx, "service.List")	
     defer span.End()
 
-	path := s.appServer.RestEndpoint.ServiceUrlDomain + "/get/" + debit.AccountID
-	rest_interface_data, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil)
+	restApiCallData.Method = "GET"
+	restApiCallData.Url = s.appServer.RestEndpoint.ServiceUrlDomain + "/get/" + debit.AccountID
+	restApiCallData.X_Api_Id = &s.appServer.RestEndpoint.XApigwId
+
+	rest_interface_acc_from, err := s.restApiService.CallApiRest(ctx, restApiCallData, nil)
 	if err != nil {
+		childLogger.Error().Err(err).Msg("error CallApiRest /get/")
 		return nil, err
 	}
-
-	var account_parsed core.Account
-	err = mapstructure.Decode(rest_interface_data, &account_parsed)
-    if err != nil {
-		childLogger.Error().Err(err).Msg("error parse interface")
+	jsonString, err  := json.Marshal(rest_interface_acc_from)
+	if err != nil {
+		childLogger.Error().Err(err).Msg("error Marshal")
 		return nil, errors.New(err.Error())
     }
+	var account_parsed core.Account
+	json.Unmarshal(jsonString, &account_parsed)
 
 	debit.FkAccountID = account_parsed.ID
 	debit.Type = "DEBIT"
