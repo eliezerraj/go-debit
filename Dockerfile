@@ -7,10 +7,10 @@ RUN apt-get update && apt-get install bash && apt-get install -y --no-install-re
 
 WORKDIR /app
 COPY . .
+RUN go mod tidy
 
 WORKDIR /app/cmd
 RUN go build -o go-debit -ldflags '-linkmode external -w -extldflags "-static"'
-RUN go mod tidy
 
 FROM alpine
 
