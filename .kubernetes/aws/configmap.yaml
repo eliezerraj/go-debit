@@ -6,7 +6,7 @@ metadata:
   labels:
     app: *app-name
 data:
-  API_VERSION: "2.1"
+  API_VERSION: "3.0"
   POD_NAME: "go-debit.k8"
   PORT: "5002"
   DB_HOST: "rds-proxy-db-arch.proxy-couoacqalfwt.us-east-2.rds.amazonaws.com"
@@ -16,14 +16,27 @@ data:
   DB_DRIVER: "postgres"
   SETPOD_AZ: "false"
   ENV: "dev"
-  
-  SERVICE_URL_DOMAIN: "https://vpce.global.dev.caradhras.io/pv"
-  X_APIGW_API_ID: "129t4y8eoj"
-
-  SERVICE_URL_DOMAIN_PAY_FEE: "https://vpce.global.dev.caradhras.io/pv"
-  X_APIGW_API_PAY_FEE: "5jdsds1yli"
-  
   OTEL_EXPORTER_OTLP_ENDPOINT: "arch-eks-01-xray-collector.default.svc.cluster.local:4317"
 
-  #SERVER_URL_DOMAIN: "http://svc-go-account.test-a.svc.cluster.local:5000"
-  #SERVER_URL_DOMAIN2: "http://svc-go-payfee.test-a.svc.cluster.local:5004"
+  NAME_SERVICE_01: "go-account"
+  URL_SERVICE_01: "https://vpce.global.dev.caradhras.io/pv/get"
+  METHOD_SERVICE_01: "GET"
+  X_APIGW_API_ID_SERVICE_01: "129t4y8eoj"
+
+  NAME_SERVICE_02: "go-account"
+  URL_SERVICE_02: "https://vpce.global.dev.caradhras.io/pv//add/fundBalanceAccount"
+  METHOD_SERVICE_02: "POST"
+  X_APIGW_API_ID_SERVICE_02: "129t4y8eoj"
+
+  NAME_SERVICE_03: "go-payfee"
+  URL_SERVICE_03: "https://vpce.global.dev.caradhras.io/pv/script/get"
+  METHOD_SERVICE_03: "GET"
+  X_APIGW_API_ID_SERVICE_03: "5jdsds1yli"
+
+  NAME_SERVICE_04: "go-payfee"
+  URL_SERVICE_04: "https://vpce.global.dev.caradhras.io/pv/key/get"
+  METHOD_SERVICE_04: "GET"
+  X_APIGW_API_ID_SERVICE_04: "5jdsds1yli"
+
+#SERVER_URL_DOMAIN: "http://svc-go-account.test-a.svc.cluster.local:5000"
+#SERVER_URL_DOMAIN2: "http://svc-go-payfee.test-a.svc.cluster.local:5004"

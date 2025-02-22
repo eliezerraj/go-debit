@@ -1,21 +1,21 @@
-package util
+package configuration
 
 import(
 	"os"
 
 	"github.com/joho/godotenv"
-	"github.com/go-debit/internal/core"
+	go_core_observ "github.com/eliezerraj/go-core/observability" 
 )
 
-func GetOtelEnv() core.ConfigOTEL {
+func GetOtelEnv() go_core_observ.ConfigOTEL {
 	childLogger.Debug().Msg("GetOtelEnv")
 
 	err := godotenv.Load(".env")
 	if err != nil {
-		childLogger.Info().Err(err).Msg("env file not found !!!")
+		childLogger.Info().Err(err).Msg("env file not found")
 	}
 
-	var configOTEL	core.ConfigOTEL
+	var configOTEL	go_core_observ.ConfigOTEL
 
 	configOTEL.TimeInterval = 1
 	configOTEL.TimeAliveIncrementer = 1

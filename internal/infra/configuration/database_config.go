@@ -1,13 +1,13 @@
-package util
+package configuration
 
 import(
 	"os"
 
 	"github.com/joho/godotenv"
-	"github.com/go-debit/internal/core"
+	go_core_pg "github.com/eliezerraj/go-core/database/pg"
 )
 
-func GetDatabaseEnv() core.DatabaseRDS {
+func GetDatabaseEnv() go_core_pg.DatabaseConfig {
 	childLogger.Debug().Msg("GetDatabaseEnv")
 
 	err := godotenv.Load(".env")
@@ -15,23 +15,23 @@ func GetDatabaseEnv() core.DatabaseRDS {
 		childLogger.Info().Err(err).Msg("env file not found !!!")
 	}
 	
-	var databaseRDS	core.DatabaseRDS
-	databaseRDS.Db_timeout = 90
+	var databaseConfig	go_core_pg.DatabaseConfig
+	databaseConfig.Db_timeout = 90
 	
 	if os.Getenv("DB_HOST") !=  "" {
-		databaseRDS.Host = os.Getenv("DB_HOST")
+		databaseConfig.Host = os.Getenv("DB_HOST")
 	}
 	if os.Getenv("DB_PORT") !=  "" {
-		databaseRDS.Port = os.Getenv("DB_PORT")
+		databaseConfig.Port = os.Getenv("DB_PORT")
 	}
 	if os.Getenv("DB_NAME") !=  "" {	
-		databaseRDS.DatabaseName = os.Getenv("DB_NAME")
+		databaseConfig.DatabaseName = os.Getenv("DB_NAME")
 	}
 	if os.Getenv("DB_SCHEMA") !=  "" {	
-		databaseRDS.Schema = os.Getenv("DB_SCHEMA")
+		databaseConfig.Schema = os.Getenv("DB_SCHEMA")
 	}
 	if os.Getenv("DB_DRIVER") !=  "" {	
-		databaseRDS.Postgres_Driver = os.Getenv("DB_DRIVER")
+		databaseConfig.Postgres_Driver = os.Getenv("DB_DRIVER")
 	}
 
 	// Get Database Secrets
@@ -46,8 +46,8 @@ func GetDatabaseEnv() core.DatabaseRDS {
 		os.Exit(3)
 	}
 	
-	databaseRDS.User = string(file_user)
-	databaseRDS.Password = string(file_pass)
+	databaseConfig.User = string(file_user)
+	databaseConfig.Password = string(file_pass)
 
-	return databaseRDS
+	return databaseConfig
 }

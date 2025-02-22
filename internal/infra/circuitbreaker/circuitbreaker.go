@@ -1,9 +1,9 @@
 package circuitbreaker
 
 import (
+    "time"
 	"github.com/sony/gobreaker"
-	"time"
-    "github.com/go-debit/internal/erro"
+    "github.com/go-debit/internal/core/erro"
 )
 
 func CircuitBreakerConfig() *gobreaker.CircuitBreaker {
