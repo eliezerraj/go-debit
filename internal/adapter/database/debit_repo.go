@@ -39,12 +39,13 @@ func (w WorkerRepository) AddDebit(ctx context.Context, tx pgx.Tx, debit *model.
 											charged_at, 
 											currency,
 											amount,
-											tenant_id) 
-			 VALUES($1, $2, $3, $4, $5, $6) RETURNING id`
+											tenant_id,
+											transaction_id) 
+			 VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id`
 
 	debit.ChargeAt = time.Now()
 
-	row := tx.QueryRow(ctx, query, debit.FkAccountID, debit.Type, debit.ChargeAt, debit.Currency, debit.Amount, debit.TenantID)								
+	row := tx.QueryRow(ctx, query, debit.FkAccountID, debit.Type, debit.ChargeAt, debit.Currency, debit.Amount, debit.TenantID, debit.TransactionID)								
 	var id int
 	if err := row.Scan(&id); err != nil {
 		return nil, errors.New(err.Error())
@@ -76,7 +77,8 @@ func (w WorkerRepository) ListDebit(ctx context.Context, debit *model.AccountSta
 					charged_at,
 					currency, 
 					amount,																										
-					tenant_id	
+					tenant_id,
+					transaction_id	
 					FROM account_statement 
 					WHERE fk_account_id =$1 and type_charge= $2 order by charged_at desc`
 
@@ -94,6 +96,7 @@ func (w WorkerRepository) ListDebit(ctx context.Context, debit *model.AccountSta
 							&res_accountStatement.Currency,
 							&res_accountStatement.Amount,
 							&res_accountStatement.TenantID,
+							&res_accountStatement.TransactionID,
 						)
 		if err != nil {
 			return nil, errors.New(err.Error())
@@ -125,7 +128,8 @@ func (w WorkerRepository) ListDebitPerDate(ctx context.Context, debit *model.Acc
 					charged_at,
 					currency, 
 					amount,																										
-					tenant_id	
+					tenant_id
+					transaction_id	
 			FROM account_statement 
 			WHERE fk_account_id =$1 
 			and type_charge= $2
@@ -146,6 +150,7 @@ func (w WorkerRepository) ListDebitPerDate(ctx context.Context, debit *model.Acc
 							&res_accountStatement.Currency,
 							&res_accountStatement.Amount,
 							&res_accountStatement.TenantID,
+							&res_accountStatement.TransactionID,
 						)
 		if err != nil {
 			return nil, errors.New(err.Error())
@@ -154,4 +159,40 @@ func (w WorkerRepository) ListDebitPerDate(ctx context.Context, debit *model.Acc
 	}
 	
 	return &res_accountStatement_list , nil
+}
+
+func (w WorkerRepository) GetTransactionUUID(ctx context.Context) (*string, error){
+	childLogger.Debug().Msg("GetTransactionUUID")
+	
+	// Trace
+	span := tracerProvider.Span(ctx, "database.GetTransactionUUID")
+	defer span.End()
+
+	conn, err := w.DatabasePGServer.Acquire(ctx)
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
+	defer w.DatabasePGServer.Release(conn)
+
+	// Prepare
+	var uuid string
+
+	// Query and Execute
+	query := `SELECT uuid_generate_v4()`
+
+	rows, err := conn.Query(ctx, query)
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		err := rows.Scan(&uuid) 
+		if err != nil {
+			return nil, errors.New(err.Error())
+        }
+		return &uuid, nil
+	}
+	
+	return &uuid, nil
 }

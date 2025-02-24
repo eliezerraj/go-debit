@@ -85,6 +85,13 @@ func (s *WorkerService) AddDebit(ctx context.Context, debit *model.AccountStatem
 
 	// Business rule
 	debit.FkAccountID = account_parsed.ID
+	
+	// Get transaction UUID 
+	res_uuid, err := s.workerRepository.GetTransactionUUID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	debit.TransactionID = res_uuid
 
 	// Add the credit
 	res, err := s.workerRepository.AddDebit(ctx, tx, debit)
@@ -105,22 +112,22 @@ func (s *WorkerService) AddDebit(ctx context.Context, debit *model.AccountStatem
 
 	//Open CB - MOCK
 	circuitBreaker := circuitbreaker.CircuitBreakerConfig()
-	_, err = circuitBreaker.Execute(func() (interface{}, error) {		
+	_, errCB := circuitBreaker.Execute(func() (interface{}, error) {		
 		// Get financial script
 		script := "script.debit"
-		res_payload, statusCode, err = apiService.CallApi(ctx,
+		res_payload, statusCode, errCB := apiService.CallApi(ctx,
 															s.apiService[2].Url + "/" + script,
 															s.apiService[2].Method,
 															&s.apiService[2].Header_x_apigw_api_id,
 															nil, 
 															nil)
-		if err != nil {
+		if errCB != nil {
 			return nil, errorStatusCode(statusCode)
 		}
-		jsonString, err = json.Marshal(res_payload)
-		if err != nil {
-			childLogger.Error().Err(err).Msg("error Marshal")
-			return nil, errors.New(err.Error())
+		jsonString, errCB = json.Marshal(res_payload)
+		if errCB != nil {
+			childLogger.Error().Err(errCB).Msg("error Marshal")
+			return nil, errors.New(errCB.Error())
 		}
 		var script_parsed model.Script
 		json.Unmarshal(jsonString, &script_parsed)
@@ -129,7 +136,7 @@ func (s *WorkerService) AddDebit(ctx context.Context, debit *model.AccountStatem
 
 		return nil, nil
 	})
-	if (err != nil) {
+	if (errCB != nil) {
 		childLogger.Debug().Msg("--------------------------------------------------")
 		childLogger.Error().Err(err).Msg(" ****** Circuit Breaker OPEN !!! ******")
 		childLogger.Debug().Msg("--------------------------------------------------")

@@ -24,7 +24,7 @@ data:
   X_APIGW_API_ID_SERVICE_01: "129t4y8eoj"
 
   NAME_SERVICE_02: "go-account"
-  URL_SERVICE_02: "https://vpce.global.dev.caradhras.io/pv//add/fundBalanceAccount"
+  URL_SERVICE_02: "https://vpce.global.dev.caradhras.io/pv/add/accountBalance"
   METHOD_SERVICE_02: "POST"
   X_APIGW_API_ID_SERVICE_02: "129t4y8eoj"
 

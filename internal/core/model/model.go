@@ -53,6 +53,7 @@ type AccountStatement struct {
 	Amount			float64 	`json:"amount,omitempty"`
 	TenantID		string  	`json:"tenant_id,omitempty"`
 	Obs				string  	`json:"obs,omitempty"`
+	TransactionID	*string  	`json:"transaction_id,transaction_id"`
 }
 
 type Fee struct {
