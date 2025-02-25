@@ -31,9 +31,14 @@ func NewWorkerRepository(databasePGServer *go_core_pg.DatabasePGServer) *WorkerR
 func (w WorkerRepository) AddDebit(ctx context.Context, tx pgx.Tx, debit *model.AccountStatement) (*model.AccountStatement, error){
 	childLogger.Debug().Msg("AddDebit")
 
+	// Trace
 	span := tracerProvider.Span(ctx, "database.AddDebit")
 	defer span.End()
 
+	//Prepare
+	debit.ChargeAt = time.Now()
+
+	// Execute e Query
 	query := `INSERT INTO account_statement (fk_account_id, 
 											type_charge,
 											charged_at, 
@@ -42,8 +47,6 @@ func (w WorkerRepository) AddDebit(ctx context.Context, tx pgx.Tx, debit *model.
 											tenant_id,
 											transaction_id) 
 			 VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id`
-
-	debit.ChargeAt = time.Now()
 
 	row := tx.QueryRow(ctx, query, debit.FkAccountID, debit.Type, debit.ChargeAt, debit.Currency, debit.Amount, debit.TenantID, debit.TransactionID)								
 	var id int
@@ -59,6 +62,7 @@ func (w WorkerRepository) AddDebit(ctx context.Context, tx pgx.Tx, debit *model.
 func (w WorkerRepository) ListDebit(ctx context.Context, debit *model.AccountStatement) (*[]model.AccountStatement, error){
 	childLogger.Debug().Msg("ListDebit")
 	
+	// Trace
 	span := tracerProvider.Span(ctx, "database.ListDebit")
 	defer span.End()
 
@@ -68,9 +72,11 @@ func (w WorkerRepository) ListDebit(ctx context.Context, debit *model.AccountSta
 	}
 	defer w.DatabasePGServer.Release(conn)
 
+	// Prepare
 	res_accountStatement := model.AccountStatement{}
 	res_accountStatement_list := []model.AccountStatement{}
 
+	// Query e Execute
 	query := `SELECT id, 
 					fk_account_id, 
 					type_charge,
@@ -110,6 +116,7 @@ func (w WorkerRepository) ListDebit(ctx context.Context, debit *model.AccountSta
 func (w WorkerRepository) ListDebitPerDate(ctx context.Context, debit *model.AccountStatement) (*[]model.AccountStatement, error){
 	childLogger.Debug().Msg("ListDebitPerDate")
 	
+	// Trace
 	span := tracerProvider.Span(ctx, "database.ListDebitPerDate")
 	defer span.End()
 
@@ -119,9 +126,11 @@ func (w WorkerRepository) ListDebitPerDate(ctx context.Context, debit *model.Acc
 	}
 	defer w.DatabasePGServer.Release(conn)
 
+	// Prepare
 	res_accountStatement := model.AccountStatement{}
 	res_accountStatement_list := []model.AccountStatement{}
 
+	// Query e Exevute
 	query := `SELECT id, 
 					fk_account_id, 
 					type_charge,
