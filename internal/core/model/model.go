@@ -11,7 +11,7 @@ type AppServer struct {
 	Server     		*Server     				`json:"server"`
 	ConfigOTEL		*go_core_observ.ConfigOTEL	`json:"otel_config"`
 	DatabaseConfig	*go_core_pg.DatabaseConfig  `json:"database"`
-	ApiService 		[]ApiService 			
+	ApiService 		[]ApiService 				`json:"api_endpoints"`
 }
 
 type InfoPod struct {
