@@ -1,10 +1,13 @@
 package service
 
 import(
+	"time"
 	"context"
 	"net/http"
 	"encoding/json"
 	"errors"
+
+	"github.com/jackc/pgx/v5"
 
 	"github.com/go-debit/internal/infra/circuitbreaker"
 	"github.com/go-debit/internal/core/model"
@@ -113,26 +116,18 @@ func (s *WorkerService) AddDebit(ctx context.Context, debit *model.AccountStatem
 	//Open CB - MOCK
 	circuitBreaker := circuitbreaker.CircuitBreakerConfig()
 	_, errCB := circuitBreaker.Execute(func() (interface{}, error) {		
-		// Get financial script
-		script := "script.debit"
-		res_payload, statusCode, errCB := apiService.CallApi(ctx,
-															s.apiService[2].Url + "/" + script,
-															s.apiService[2].Method,
-															&s.apiService[2].Header_x_apigw_api_id,
-															nil, 
-															nil)
-		if errCB != nil {
-			return nil, errorStatusCode(statusCode)
-		}
-		jsonString, errCB = json.Marshal(res_payload)
-		if errCB != nil {
-			childLogger.Error().Err(errCB).Msg("error Marshal")
-			return nil, errors.New(errCB.Error())
-		}
-		var script_parsed model.Script
-		json.Unmarshal(jsonString, &script_parsed)
+		
+		// Add accountStamentFee
+		accountStatementFee := model.AccountStatementFee{}
+		accountStatementFee.FkAccountStatementID = debit.ID
+		accountStatementFee.Currency = debit.Currency
+		accountStatementFee.Amount	 = debit.Amount
+		accountStatementFee.TenantID = debit.TenantID
 
-		childLogger.Debug().Interface("script_parsed:",script_parsed).Msg("")
+		_, errCB := s.AddAccountStatementFee(ctx, tx , accountStatementFee)
+		if errCB != nil {
+			return nil, errCB
+		}
 
 		return nil, nil
 	})
@@ -222,4 +217,70 @@ func (s *WorkerService) ListDebitPerDate(ctx context.Context, debit *model.Accou
 	}
 
 	return res, nil
+}
+
+func (s *WorkerService) AddAccountStatementFee(ctx context.Context, tx pgx.Tx, accountStatementFee model.AccountStatementFee) (*model.AccountStatementFee, error){
+	childLogger.Debug().Msg("AddAccountStatementFee")
+	childLogger.Debug().Interface("accountStatementFee: ", accountStatementFee).Msg("")
+
+	// Trace
+	span := tracerProvider.Span(ctx, "service.AddAccountStatementFee")
+	defer span.End()
+
+	// Get financial script
+	script := "script.debit"
+	res_payload, statusCode, err := apiService.CallApi(ctx,
+														s.apiService[2].Url + "/" + script,
+														s.apiService[2].Method,
+														&s.apiService[2].Header_x_apigw_api_id,
+														nil, 
+														nil)
+	if err != nil {
+		return nil, errorStatusCode(statusCode)
+	}
+
+	// Unmarshall to struct
+	jsonString, err := json.Marshal(res_payload)
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
+	var script_parsed model.Script
+	json.Unmarshal(jsonString, &script_parsed)
+	
+	// Get all fees
+	for _, v_fee := range script_parsed.Fee {
+		res_fee, statusCode, err := apiService.CallApi(ctx,
+														s.apiService[3].Url + "/" + v_fee,
+														s.apiService[3].Method,
+														&s.apiService[3].Header_x_apigw_api_id,
+														nil, 
+														nil)
+		if err != nil {
+			return nil, errorStatusCode(statusCode)
+		}
+
+		// Unmarshall to struct
+		jsonString, err := json.Marshal(res_fee)
+		if err != nil {
+			return nil, errors.New(err.Error())
+		}
+		var fee_parsed model.Fee
+		json.Unmarshal(jsonString, &fee_parsed)
+
+		// Prepare to insert AccountStatementFee
+		new_accountStatementFee := accountStatementFee
+		new_accountStatementFee.TypeFee = fee_parsed.Name
+		new_accountStatementFee.ValueFee = fee_parsed.Value
+		new_accountStatementFee.ChargeAt = time.Now()
+		new_accountStatementFee.Amount	= (accountStatementFee.Amount * (fee_parsed.Value/100))
+
+		_, err = s.workerRepository.AddAccountStatementFee(ctx, tx, new_accountStatementFee)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	childLogger.Debug().Interface("script_parsed:",script_parsed).Msg("")
+
+	return &accountStatementFee, nil
 }

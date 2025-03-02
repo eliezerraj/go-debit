@@ -29,12 +29,12 @@ data:
   X_APIGW_API_ID_SERVICE_02: "129t4y8eoj"
 
   NAME_SERVICE_03: "go-payfee"
-  URL_SERVICE_03: "https://vpce.global.dev.caradhras.io/pv/script/get"
+  URL_SERVICE_03: "https://vpce.global.dev.caradhras.io/pv/script"
   METHOD_SERVICE_03: "GET"
   X_APIGW_API_ID_SERVICE_03: "5jdsds1yli"
 
   NAME_SERVICE_04: "go-payfee"
-  URL_SERVICE_04: "https://vpce.global.dev.caradhras.io/pv/key/get"
+  URL_SERVICE_04: "https://vpce.global.dev.caradhras.io/pv/key"
   METHOD_SERVICE_04: "GET"
   X_APIGW_API_ID_SERVICE_04: "5jdsds1yli"
 

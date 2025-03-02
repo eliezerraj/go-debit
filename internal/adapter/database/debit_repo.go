@@ -59,6 +59,43 @@ func (w WorkerRepository) AddDebit(ctx context.Context, tx pgx.Tx, debit *model.
 	return debit, nil
 }
 
+func (w WorkerRepository) AddAccountStatementFee(ctx context.Context, tx pgx.Tx, accountStatementFee model.AccountStatementFee) (*model.AccountStatementFee, error){
+	childLogger.Debug().Msg("AddAccountStatementFee")
+
+	// Trace
+	span := tracerProvider.Span(ctx, "database.AddAccountStatementFee")
+	defer span.End()
+
+	//Prepare
+	accountStatementFee.ChargeAt = time.Now()
+
+	// Execute e Query
+	query := `INSERT INTO account_statement_fee (fk_account_statement_id, 
+												charged_at,
+												type_fee,
+												value_fee,
+												currency,
+												amount,
+												tenant_id) 
+				VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id`
+
+	row := tx.QueryRow(ctx, query, accountStatementFee.FkAccountStatementID,
+									accountStatementFee.ChargeAt,
+									accountStatementFee.TypeFee,
+									accountStatementFee.ValueFee,
+									accountStatementFee.Currency,
+									accountStatementFee.Amount,
+									accountStatementFee.TenantID)								
+
+	var id int
+	if err := row.Scan(&id); err != nil {
+		return nil, errors.New(err.Error())
+	}
+	accountStatementFee.ID = id
+
+	return &accountStatementFee , nil
+}
+
 func (w WorkerRepository) ListDebit(ctx context.Context, debit *model.AccountStatement) (*[]model.AccountStatement, error){
 	childLogger.Debug().Msg("ListDebit")
 	
