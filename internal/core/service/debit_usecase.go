@@ -40,7 +40,6 @@ func (s *WorkerService) AddDebit(ctx context.Context, debit *model.AccountStatem
 
 	// Trace
 	span := tracerProvider.Span(ctx, "service.AddDebit")
-	defer span.End()
 	
 	// Get the database connection
 	tx, conn, err := s.workerRepository.DatabasePGServer.StartTx(ctx)
