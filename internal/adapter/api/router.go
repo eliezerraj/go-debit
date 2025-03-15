@@ -61,7 +61,7 @@ func (h *HttpRouters) AddDebit(rw http.ResponseWriter, req *http.Request) error 
 	debit := model.AccountStatement{}
 	err := json.NewDecoder(req.Body).Decode(&debit)
     if err != nil {
-		core_apiError = core_apiError.NewAPIError(erro.ErrUnmarshal, http.StatusBadRequest)
+		core_apiError = core_apiError.NewAPIError(err, http.StatusBadRequest)
 		return &core_apiError
     }
 	defer req.Body.Close()
@@ -131,7 +131,7 @@ func (h *HttpRouters) ListDebitPerDate(rw http.ResponseWriter, req *http.Request
 
 	convertDate, err := core_tools.ConvertToDate(varDate)
 	if err != nil {
-		core_apiError = core_apiError.NewAPIError(erro.ErrUnmarshal, http.StatusBadRequest)
+		core_apiError = core_apiError.NewAPIError(err, http.StatusBadRequest)
 		return &core_apiError
 	}
 	debit.ChargeAt = *convertDate
