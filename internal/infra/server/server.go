@@ -33,10 +33,12 @@ type HttpServer struct {
 	httpServer	*model.Server
 }
 
+// About create a new http server
 func NewHttpAppServer(httpServer *model.Server) HttpServer {
 	return HttpServer{httpServer: httpServer }
 }
 
+// About start http server
 func (h HttpServer) StartHttpAppServer(	ctx context.Context, 
 										httpRouters *api.HttpRouters,
 										appServer *model.AppServer) {
@@ -72,7 +74,7 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 	myRouter.Use(core_middleware.MiddleWareHandlerHeader)
 
 	myRouter.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
-		childLogger.Debug().Msg("/")
+		childLogger.Info().Msg("/")
 		json.NewEncoder(rw).Encode(appServer)
 	})
 
@@ -86,7 +88,7 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
     header.HandleFunc("/header", httpRouters.Header)
 
 	myRouter.HandleFunc("/info", func(rw http.ResponseWriter, req *http.Request) {
-		childLogger.Debug().Msg("/info")
+		childLogger.Info().Msg("/info")
 		rw.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(rw).Encode(appServer)
 	})
@@ -103,6 +105,7 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 	listDebitDate.HandleFunc("/listPerDate", core_middleware.MiddleWareErrorHandler(httpRouters.ListDebitPerDate))		
 	listDebitDate.Use(otelmux.Middleware("go-debit"))
 
+	// setup http server	
 	srv := http.Server{
 		Addr:         ":" +  strconv.Itoa(h.httpServer.Port),      	
 		Handler:      myRouter,                	          
@@ -113,6 +116,7 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 
 	childLogger.Info().Str("Service Port : ", strconv.Itoa(h.httpServer.Port)).Msg("Service Port")
 
+	// start http server	
 	go func() {
 		err := srv.ListenAndServe()
 		if err != nil {

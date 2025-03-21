@@ -28,8 +28,9 @@ func NewWorkerRepository(databasePGServer *go_core_pg.DatabasePGServer) *WorkerR
 	}
 }
 
+// About add debit
 func (w WorkerRepository) AddDebit(ctx context.Context, tx pgx.Tx, debit *model.AccountStatement) (*model.AccountStatement, error){
-	childLogger.Debug().Msg("AddDebit")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("AddDebit")
 
 	// Trace
 	span := tracerProvider.Span(ctx, "database.AddDebit")
@@ -60,7 +61,7 @@ func (w WorkerRepository) AddDebit(ctx context.Context, tx pgx.Tx, debit *model.
 }
 
 func (w WorkerRepository) AddAccountStatementFee(ctx context.Context, tx pgx.Tx, accountStatementFee model.AccountStatementFee) (*model.AccountStatementFee, error){
-	childLogger.Debug().Msg("AddAccountStatementFee")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("AddAccountStatementFee")
 
 	// Trace
 	span := tracerProvider.Span(ctx, "database.AddAccountStatementFee")
@@ -97,7 +98,7 @@ func (w WorkerRepository) AddAccountStatementFee(ctx context.Context, tx pgx.Tx,
 }
 
 func (w WorkerRepository) ListDebit(ctx context.Context, debit *model.AccountStatement) (*[]model.AccountStatement, error){
-	childLogger.Debug().Msg("ListDebit")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("ListDebit")
 	
 	// Trace
 	span := tracerProvider.Span(ctx, "database.ListDebit")
@@ -151,7 +152,7 @@ func (w WorkerRepository) ListDebit(ctx context.Context, debit *model.AccountSta
 }
 
 func (w WorkerRepository) ListDebitPerDate(ctx context.Context, debit *model.AccountStatement) (*[]model.AccountStatement, error){
-	childLogger.Debug().Msg("ListDebitPerDate")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("ListDebitPerDate")
 	
 	// Trace
 	span := tracerProvider.Span(ctx, "database.ListDebitPerDate")
@@ -208,7 +209,7 @@ func (w WorkerRepository) ListDebitPerDate(ctx context.Context, debit *model.Acc
 }
 
 func (w WorkerRepository) GetTransactionUUID(ctx context.Context) (*string, error){
-	childLogger.Debug().Msg("GetTransactionUUID")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("GetTransactionUUID")
 	
 	// Trace
 	span := tracerProvider.Span(ctx, "database.GetTransactionUUID")

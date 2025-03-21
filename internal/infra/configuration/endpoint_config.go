@@ -7,7 +7,7 @@ import(
 )
 
 func GetEndpointEnv() []model.ApiService {
-	childLogger.Debug().Msg("GetEndpointEnv")
+	childLogger.Info().Msg("GetEndpointEnv")
 
 	err := godotenv.Load(".env")
 	if err != nil {

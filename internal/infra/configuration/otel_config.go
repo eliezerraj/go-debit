@@ -8,7 +8,7 @@ import(
 )
 
 func GetOtelEnv() go_core_observ.ConfigOTEL {
-	childLogger.Debug().Msg("GetOtelEnv")
+	childLogger.Info().Msg("GetOtelEnv")
 
 	err := godotenv.Load(".env")
 	if err != nil {

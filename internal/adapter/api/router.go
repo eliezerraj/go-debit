@@ -31,27 +31,27 @@ func NewHttpRouters(workerService *service.WorkerService) HttpRouters {
 }
 
 func (h *HttpRouters) Health(rw http.ResponseWriter, req *http.Request) {
-	childLogger.Debug().Msg("Health")
+	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("Health")
 
 	health := true
 	json.NewEncoder(rw).Encode(health)
 }
 
 func (h *HttpRouters) Live(rw http.ResponseWriter, req *http.Request) {
-	childLogger.Debug().Msg("Live")
+	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("Live")
 
 	live := true
 	json.NewEncoder(rw).Encode(live)
 }
 
 func (h *HttpRouters) Header(rw http.ResponseWriter, req *http.Request) {
-	childLogger.Debug().Msg("Header")
+	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("Header")
 	
 	json.NewEncoder(rw).Encode(req.Header)
 }
 
 func (h *HttpRouters) AddDebit(rw http.ResponseWriter, req *http.Request) error {
-	childLogger.Debug().Msg("AddDebit")
+	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("AddDebit")
 
 	//trace
 	span := tracerProvider.Span(req.Context(), "adapter.api.AddDebit")
@@ -86,7 +86,7 @@ func (h *HttpRouters) AddDebit(rw http.ResponseWriter, req *http.Request) error 
 }
 
 func (h *HttpRouters) ListDebit(rw http.ResponseWriter, req *http.Request) error {
-	childLogger.Debug().Msg("ListDebit")
+	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("ListDebit")
 
 	// trace
 	span := tracerProvider.Span(req.Context(), "adapter.api.ListDebit")
@@ -115,7 +115,7 @@ func (h *HttpRouters) ListDebit(rw http.ResponseWriter, req *http.Request) error
 }
 
 func (h *HttpRouters) ListDebitPerDate(rw http.ResponseWriter, req *http.Request) error {
-	childLogger.Debug().Msg("ListDebitPerDate")
+	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("ListDebitPerDate")
 
 	//Trace
 	span := tracerProvider.Span(req.Context(), "adapter.api.ListDebitPerDate")

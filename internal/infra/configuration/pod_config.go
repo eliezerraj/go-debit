@@ -18,7 +18,7 @@ var childLogger = log.With().Str("infra", "configuration").Logger()
 
 // Load the Pod configuration
 func GetInfoPod() (	model.InfoPod, model.Server) {
-	childLogger.Debug().Msg("GetInfoPod")
+	childLogger.Info().Msg("GetInfoPod")
 
 	err := godotenv.Load(".env")
 	if err != nil {

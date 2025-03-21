@@ -1,6 +1,7 @@
 package service
 
 import(
+	"fmt"
 	"time"
 	"context"
 	"net/http"
@@ -34,13 +35,15 @@ func errorStatusCode(statusCode int) error{
 	return err
 }
 
+// About add credit
 func (s *WorkerService) AddDebit(ctx context.Context, debit *model.AccountStatement) (*model.AccountStatement, error){
-	childLogger.Debug().Msg("AddDebit")
-	childLogger.Debug().Interface("debit: ", debit).Msg("")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("AddDebit")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("debit: ", debit).Msg("")
 
 	// Trace
 	span := tracerProvider.Span(ctx, "service.AddDebit")
-	
+	trace_id := fmt.Sprintf("%v",ctx.Value("trace-request-id"))
+
 	// Get the database connection
 	tx, conn, err := s.workerRepository.DatabasePGServer.StartTx(ctx)
 	if err != nil {
@@ -71,7 +74,8 @@ func (s *WorkerService) AddDebit(ctx context.Context, debit *model.AccountStatem
 														s.apiService[0].Url + "/" + debit.AccountID,
 														s.apiService[0].Method,
 														&s.apiService[0].Header_x_apigw_api_id,
-														nil, 
+														nil,
+														&trace_id,
 														nil)
 	if err != nil {
 		return nil, errorStatusCode(statusCode)
@@ -106,7 +110,8 @@ func (s *WorkerService) AddDebit(ctx context.Context, debit *model.AccountStatem
 											s.apiService[1].Url,
 											s.apiService[1].Method,
 											&s.apiService[1].Header_x_apigw_api_id,
-											nil, 
+											nil,
+											&trace_id, 
 											debit)
 	if err != nil {
 		return nil, errorStatusCode(statusCode)
@@ -142,11 +147,12 @@ func (s *WorkerService) AddDebit(ctx context.Context, debit *model.AccountStatem
 }
 
 func (s *WorkerService) ListDebit(ctx context.Context, debit *model.AccountStatement) (*[]model.AccountStatement, error){
-	childLogger.Debug().Msg("ListDebit")
-	childLogger.Debug().Interface("debit: ", debit).Msg("")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("ListDebit")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("debit: ", debit).Msg("")
 
 	// Trace
 	span := tracerProvider.Span(ctx, "service.ListDebit")
+	trace_id := fmt.Sprintf("%v",ctx.Value("trace-request-id"))
 	defer span.End()
 	
 	// Get the Account ID from Account-service
@@ -154,7 +160,8 @@ func (s *WorkerService) ListDebit(ctx context.Context, debit *model.AccountState
 														s.apiService[0].Url + "/" + debit.AccountID,
 														s.apiService[0].Method,
 														&s.apiService[0].Header_x_apigw_api_id,
-														nil, 
+														nil,
+														&trace_id,
 														nil)
 	if err != nil {
 		return nil, errorStatusCode(statusCode)
@@ -180,11 +187,12 @@ func (s *WorkerService) ListDebit(ctx context.Context, debit *model.AccountState
 }
 
 func (s *WorkerService) ListDebitPerDate(ctx context.Context, debit *model.AccountStatement) (*[]model.AccountStatement, error){
-	childLogger.Debug().Msg("ListDebitPerDate")
-	childLogger.Debug().Interface("debit: ", debit).Msg("")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("ListDebitPerDate")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("debit: ", debit).Msg("")
 
 	// Trace
 	span := tracerProvider.Span(ctx, "service.ListDebit'PerDate")
+	trace_id := fmt.Sprintf("%v",ctx.Value("trace-request-id"))
 	defer span.End()
 	
 	// Get the Account ID from Account-service
@@ -192,7 +200,8 @@ func (s *WorkerService) ListDebitPerDate(ctx context.Context, debit *model.Accou
 														s.apiService[0].Url + "/" + debit.AccountID,
 														s.apiService[0].Method,
 														&s.apiService[0].Header_x_apigw_api_id,
-														nil, 
+														nil,
+														&trace_id,
 														nil)
 	if err != nil {
 		return nil, errorStatusCode(statusCode)
@@ -219,11 +228,12 @@ func (s *WorkerService) ListDebitPerDate(ctx context.Context, debit *model.Accou
 }
 
 func (s *WorkerService) AddAccountStatementFee(ctx context.Context, tx pgx.Tx, accountStatementFee model.AccountStatementFee) (*model.AccountStatementFee, error){
-	childLogger.Debug().Msg("AddAccountStatementFee")
-	childLogger.Debug().Interface("accountStatementFee: ", accountStatementFee).Msg("")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("AddAccountStatementFee")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("accountStatementFee: ", accountStatementFee).Msg("")
 
 	// Trace
 	span := tracerProvider.Span(ctx, "service.AddAccountStatementFee")
+	trace_id := fmt.Sprintf("%v",ctx.Value("trace-request-id"))
 	defer span.End()
 
 	// Get financial script
@@ -232,7 +242,8 @@ func (s *WorkerService) AddAccountStatementFee(ctx context.Context, tx pgx.Tx, a
 														s.apiService[2].Url + "/" + script,
 														s.apiService[2].Method,
 														&s.apiService[2].Header_x_apigw_api_id,
-														nil, 
+														nil,
+														&trace_id,
 														nil)
 	if err != nil {
 		return nil, errorStatusCode(statusCode)
@@ -252,7 +263,8 @@ func (s *WorkerService) AddAccountStatementFee(ctx context.Context, tx pgx.Tx, a
 														s.apiService[3].Url + "/" + v_fee,
 														s.apiService[3].Method,
 														&s.apiService[3].Header_x_apigw_api_id,
-														nil, 
+														nil,
+														&trace_id,
 														nil)
 		if err != nil {
 			return nil, errorStatusCode(statusCode)
