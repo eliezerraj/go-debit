@@ -37,8 +37,7 @@ func errorStatusCode(statusCode int) error{
 
 // About add credit
 func (s *WorkerService) AddDebit(ctx context.Context, debit *model.AccountStatement) (*model.AccountStatement, error){
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("AddDebit")
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("debit: ", debit).Msg("")
+	childLogger.Info().Str("func","AddDebit").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("debit", debit).Send()
 
 	// Trace
 	span := tracerProvider.Span(ctx, "service.AddDebit")
@@ -147,8 +146,7 @@ func (s *WorkerService) AddDebit(ctx context.Context, debit *model.AccountStatem
 }
 
 func (s *WorkerService) ListDebit(ctx context.Context, debit *model.AccountStatement) (*[]model.AccountStatement, error){
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("ListDebit")
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("debit: ", debit).Msg("")
+	childLogger.Info().Str("func","ListDebit").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("debit", debit).Send()
 
 	// Trace
 	span := tracerProvider.Span(ctx, "service.ListDebit")
@@ -187,8 +185,7 @@ func (s *WorkerService) ListDebit(ctx context.Context, debit *model.AccountState
 }
 
 func (s *WorkerService) ListDebitPerDate(ctx context.Context, debit *model.AccountStatement) (*[]model.AccountStatement, error){
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("ListDebitPerDate")
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("debit: ", debit).Msg("")
+	childLogger.Info().Str("func","ListDebitPerDate").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("debit", debit).Send()
 
 	// Trace
 	span := tracerProvider.Span(ctx, "service.ListDebit'PerDate")
@@ -228,8 +225,7 @@ func (s *WorkerService) ListDebitPerDate(ctx context.Context, debit *model.Accou
 }
 
 func (s *WorkerService) AddAccountStatementFee(ctx context.Context, tx pgx.Tx, accountStatementFee model.AccountStatementFee) (*model.AccountStatementFee, error){
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("AddAccountStatementFee")
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("accountStatementFee: ", accountStatementFee).Msg("")
+	childLogger.Info().Str("func","AddAccountStatementFee").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("accountStatementFee", accountStatementFee).Send()
 
 	// Trace
 	span := tracerProvider.Span(ctx, "service.AddAccountStatementFee")

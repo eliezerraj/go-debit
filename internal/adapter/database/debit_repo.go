@@ -13,15 +13,16 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+var childLogger = log.With().Str("component","go-debit").Str("package","internal.adapter.database").Logger()
+
 var tracerProvider go_core_observ.TracerProvider
-var childLogger = log.With().Str("adapter", "database").Logger()
 
 type WorkerRepository struct {
 	DatabasePGServer *go_core_pg.DatabasePGServer
 }
 
 func NewWorkerRepository(databasePGServer *go_core_pg.DatabasePGServer) *WorkerRepository{
-	childLogger.Debug().Msg("NewWorkerRepository")
+	childLogger.Info().Str("func","NewWorkerRepository").Send()
 
 	return &WorkerRepository{
 		DatabasePGServer: databasePGServer,
@@ -30,7 +31,7 @@ func NewWorkerRepository(databasePGServer *go_core_pg.DatabasePGServer) *WorkerR
 
 // About add debit
 func (w WorkerRepository) AddDebit(ctx context.Context, tx pgx.Tx, debit *model.AccountStatement) (*model.AccountStatement, error){
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("AddDebit")
+	childLogger.Info().Str("func","AddDebit").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Send()
 
 	// Trace
 	span := tracerProvider.Span(ctx, "database.AddDebit")
@@ -61,7 +62,7 @@ func (w WorkerRepository) AddDebit(ctx context.Context, tx pgx.Tx, debit *model.
 }
 
 func (w WorkerRepository) AddAccountStatementFee(ctx context.Context, tx pgx.Tx, accountStatementFee model.AccountStatementFee) (*model.AccountStatementFee, error){
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("AddAccountStatementFee")
+	childLogger.Info().Str("func","AddAccountStatementFee").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Send()
 
 	// Trace
 	span := tracerProvider.Span(ctx, "database.AddAccountStatementFee")
@@ -98,7 +99,7 @@ func (w WorkerRepository) AddAccountStatementFee(ctx context.Context, tx pgx.Tx,
 }
 
 func (w WorkerRepository) ListDebit(ctx context.Context, debit *model.AccountStatement) (*[]model.AccountStatement, error){
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("ListDebit")
+	childLogger.Info().Str("func","ListDebit").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Send()
 	
 	// Trace
 	span := tracerProvider.Span(ctx, "database.ListDebit")
@@ -152,7 +153,7 @@ func (w WorkerRepository) ListDebit(ctx context.Context, debit *model.AccountSta
 }
 
 func (w WorkerRepository) ListDebitPerDate(ctx context.Context, debit *model.AccountStatement) (*[]model.AccountStatement, error){
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("ListDebitPerDate")
+	childLogger.Info().Str("func","ListDebitPerDate").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Send()
 	
 	// Trace
 	span := tracerProvider.Span(ctx, "database.ListDebitPerDate")
@@ -209,7 +210,7 @@ func (w WorkerRepository) ListDebitPerDate(ctx context.Context, debit *model.Acc
 }
 
 func (w WorkerRepository) GetTransactionUUID(ctx context.Context) (*string, error){
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("GetTransactionUUID")
+	childLogger.Info().Str("func","GetTransactionUUID").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Send()
 	
 	// Trace
 	span := tracerProvider.Span(ctx, "database.GetTransactionUUID")

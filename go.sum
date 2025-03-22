@@ -30,8 +30,8 @@ github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSV
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/eliezerraj/go-core v1.0.52 h1:R+PJpz2POQHjWlTdO3kW7LYBDYkD5QgbH4sLlzU8YyI=
-github.com/eliezerraj/go-core v1.0.52/go.mod h1:gofQOkLQBlD7Sqs5t0xv2dBSbOjZHyEqa0Az90aR7Fw=
+github.com/eliezerraj/go-core v1.0.54 h1:egn31shLCEYxMGvLmWkNVp51GYpr09eBlmTpFoc0grs=
+github.com/eliezerraj/go-core v1.0.54/go.mod h1:gofQOkLQBlD7Sqs5t0xv2dBSbOjZHyEqa0Az90aR7Fw=
 github.com/felixge/httpsnoop v1.0.4 h1:NFTV2Zj1bL4mc9sqWACXbQFVBBg2W3GPvqp8/ESS2Wg=
 github.com/felixge/httpsnoop v1.0.4/go.mod h1:m8KPJKqk1gH5J9DgRY2ASl2lWCfGKXixSwevea8zH2U=
 github.com/go-logr/logr v1.2.2/go.mod h1:jdQByPbusPIv2/zmleS9BjJVeZ6kBagPoEUsqbVz/1A=

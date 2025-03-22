@@ -8,11 +8,11 @@ import(
 )
 
 func GetDatabaseEnv() go_core_pg.DatabaseConfig {
-	childLogger.Info().Msg("GetDatabaseEnv")
+	childLogger.Info().Str("func","GetDatabaseEnv").Send()
 
 	err := godotenv.Load(".env")
 	if err != nil {
-		childLogger.Info().Err(err).Msg("env file not found !!!")
+		childLogger.Info().Err(err).Send()
 	}
 	
 	var databaseConfig	go_core_pg.DatabaseConfig
@@ -37,12 +37,12 @@ func GetDatabaseEnv() go_core_pg.DatabaseConfig {
 	// Get Database Secrets
 	file_user, err := os.ReadFile("/var/pod/secret/username")
 	if err != nil {
-		childLogger.Error().Err(err).Msg("fatal erro get /var/pod/secret/username")
+		childLogger.Error().Err(err).Send()
 		os.Exit(3)
 	}
 	file_pass, err := os.ReadFile("/var/pod/secret/password")
 	if err != nil {
-		childLogger.Error().Err(err).Msg("fatal erro get /var/pod/secret/password")
+		childLogger.Error().Err(err).Send()
 		os.Exit(3)
 	}
 	
