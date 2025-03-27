@@ -35,15 +35,13 @@ func NewHttpRouters(workerService *service.WorkerService) HttpRouters {
 func (h *HttpRouters) Health(rw http.ResponseWriter, req *http.Request) {
 	childLogger.Info().Str("func","Health").Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Send()
 
-	health := true
-	json.NewEncoder(rw).Encode(health)
+	json.NewEncoder(rw).Encode(model.MessageRouter{Message: "true"})
 }
 
 func (h *HttpRouters) Live(rw http.ResponseWriter, req *http.Request) {
 	childLogger.Info().Str("func","Live").Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Send()
 
-	live := true
-	json.NewEncoder(rw).Encode(live)
+	json.NewEncoder(rw).Encode(model.MessageRouter{Message: "true"})
 }
 
 func (h *HttpRouters) Header(rw http.ResponseWriter, req *http.Request) {

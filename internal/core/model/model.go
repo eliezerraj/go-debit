@@ -33,6 +33,10 @@ type Server struct {
 	CtxTimeout		int `json:"ctxTimeout"`
 }
 
+type MessageRouter struct {
+	Message			string `json:"message"`
+}
+
 type Account struct {
 	ID				int			`json:"id,omitempty"`
 	AccountID		string		`json:"account_id,omitempty"`
